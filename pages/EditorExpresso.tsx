@@ -63,14 +63,14 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
 
   const generateAIImage = async () => {
     if (!title) {
-      alert("Defina uma pergunta primeiro.");
+      alert("Defina uma pergunta para a IA gerar a arte.");
       return;
     }
 
     setIsGeneratingImage(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Minimalist 3D isometric illustration about "${title}". Soft lighting, cinematic, no text, professional art style.`;
+      const prompt = `Minimalist 3D isometric illustration for Christian apologetics about: "${title}". Soft cinematic lighting, professional art, no text.`;
       
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -87,9 +87,10 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
           }
         }
       }
+      throw new Error("Falha ao receber imagem.");
     } catch (error) {
       console.error(error);
-      alert("Erro ao gerar imagem. Tente manualmente.");
+      alert("Erro ao gerar capa via IA.");
     } finally {
       setIsGeneratingImage(false);
     }
@@ -120,7 +121,7 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
   };
 
   return (
-    <div className={`min-h-screen pb-32 transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
+    <div className={`min-h-screen pb-32 page-enter ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
       {isCategoryModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-4">
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setIsCategoryModalOpen(false)}></div>
@@ -138,9 +139,9 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
         </div>
       )}
 
-      <header className={`sticky top-0 z-50 flex items-center justify-between px-6 py-6 border-b transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-50'}`}>
+      <header className={`sticky top-0 z-50 flex items-center justify-between px-6 py-6 border-b ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-50'}`}>
         <button onClick={() => navigate('/editor')} className="text-slate-400"><span className="material-symbols-outlined">arrow_back</span></button>
-        <h1 className="text-lg font-black font-display">{id ? 'Editar' : 'Novo'} Expresso</h1>
+        <h1 className="text-lg font-black">{id ? 'Editar' : 'Novo'} Expresso</h1>
         <div className="w-10"></div>
       </header>
 
@@ -148,7 +149,7 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
         <section className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Capa do Post</h3>
-            <button onClick={generateAIImage} disabled={isGeneratingImage} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
+            <button onClick={generateAIImage} disabled={isGeneratingImage} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1.5 active:scale-95 transition-all">
               <span className={`material-symbols-outlined text-sm ${isGeneratingImage ? 'animate-spin' : ''}`}>auto_awesome</span>
               {isGeneratingImage ? 'Gerando...' : 'IA de Capa'}
             </button>
@@ -171,7 +172,7 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
 
         <div className="flex gap-4 pt-4">
           <button onClick={() => handleSave('draft')} className={`flex-1 h-16 rounded-[24px] font-black uppercase text-[10px] tracking-widest ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>Rascunho</button>
-          <button onClick={() => handleSave('published')} className="flex-[2] h-16 bg-blue-600 text-white rounded-[24px] font-black uppercase text-[11px] tracking-widest shadow-2xl flex items-center justify-center gap-2 transition-transform active:scale-95">Publicar Expresso</button>
+          <button onClick={() => handleSave('published')} className="flex-[2] h-16 bg-blue-600 text-white rounded-[24px] font-black uppercase text-[11px] tracking-widest shadow-2xl flex items-center justify-center gap-2 active:scale-95 transition-all">Publicar Expresso</button>
         </div>
       </main>
     </div>
