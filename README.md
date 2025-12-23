@@ -1,20 +1,38 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SomosUm Goiás - App de Apologética
 
-# Run and deploy your AI Studio app
+Uma plataforma dinâmica desenvolvida para jovens explorarem a harmonia entre fé e razão. O app oferece conteúdos rápidos ("Expressos") e estudos aprofundados sobre apologética cristã.
 
-This contains everything you need to run your app locally.
+## 🚀 Tecnologias
 
-View your app in AI Studio: https://ai.studio/apps/drive/18aMf1hhXXDPb6yJ8aPGPgLbFcttmkKCK
+- **React 19** + **TypeScript**
+- **Vite** (Build Tool)
+- **Tailwind CSS** (Estilização)
+- **Gemini API** (Geração de imagens e conteúdo via IA)
+- **Cloudflare Pages** (Hospedagem)
 
-## Run Locally
+## 🛠️ Como rodar o projeto
 
-**Prerequisites:**  Node.js
+1. Clone o repositório
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
+4. Para gerar a versão de produção:
+   ```bash
+   npm run build
+   ```
 
+## 📄 Estrutura de Conteúdo
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+O conteúdo é gerenciado através do arquivo `conteudo.json`, permitindo atualizações dinâmicas na interface, categorias e postagens.
+
+## 🤖 Integração com IA
+
+O editor de conteúdo utiliza o modelo `gemini-2.5-flash-image` para gerar capas contextuais baseadas no título das postagens dos usuários.
+
+---
+Desenvolvido para o ministério SomosUm Goiás.
