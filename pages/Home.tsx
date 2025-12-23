@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import Header from '../components/Header';
 
-// Curadoria de Missões (Fallback de Segurança e Base Local)
 const FALLBACK_MISSIONS = [
   "Memorize 1 Pedro 3:15 hoje e pense em como aplicá-lo em uma conversa real.",
   "Desafio: Explique a um familiar o que é 'Evangelho' em menos de 1 minuto.",
@@ -25,12 +24,17 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ content, missions }) => {
   const navigate = useNavigate();
   const [currentMission, setCurrentMission] = useState<string | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
   const isDark = content.profile.isDarkMode;
 
   const handleGetMission = () => {
-    const source = missions.length > 0 ? missions : FALLBACK_MISSIONS;
-    const randomIndex = Math.floor(Math.random() * source.length);
-    setCurrentMission(source[randomIndex]);
+    setIsRevealing(true);
+    setTimeout(() => {
+      const source = missions.length > 0 ? missions : FALLBACK_MISSIONS;
+      const randomIndex = Math.floor(Math.random() * source.length);
+      setCurrentMission(source[randomIndex]);
+      setIsRevealing(false);
+    }, 1000);
   };
 
   return (
@@ -114,13 +118,13 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
 
         {/* Missão de Hoje (Encerrando o feed) */}
         <section className="space-y-4 pt-4 animate-in fade-in duration-700">
-           <div className={`p-6 rounded-[40px] border shadow-2xl transition-all ${isDark ? 'bg-blue-600/10 border-blue-500/20' : 'bg-white border-slate-100'}`}>
-              <div className="flex items-center gap-4 mb-6">
+           <div className={`p-8 rounded-[40px] border shadow-2xl transition-all relative overflow-hidden ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-white border-slate-100'}`}>
+              <div className="flex items-center gap-4 mb-6 relative z-10">
                  <div className="size-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30">
                     <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>target</span>
                  </div>
                  <div>
-                    <h3 className="text-base font-black uppercase tracking-tight leading-none">Desafio Prático</h3>
+                    <h3 className={`text-base font-black uppercase tracking-tight leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>Desafio Prático</h3>
                     <p className="text-[10px] text-slate-400 font-black uppercase mt-1 tracking-widest">
                       Missão Diária
                     </p>
@@ -128,8 +132,8 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
               </div>
               
               {currentMission ? (
-                <div className="animate-in zoom-in-95 duration-300">
-                  <div className={`p-5 rounded-2xl mb-6 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                <div className="animate-in zoom-in-95 duration-500 relative z-10">
+                  <div className={`p-6 rounded-3xl mb-6 ${isDark ? 'bg-slate-900/50 border border-slate-800' : 'bg-slate-50 border border-slate-100'}`}>
                     <p className={`text-[15px] font-bold leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                       {currentMission}
                     </p>
@@ -143,14 +147,27 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
                   </div>
                 </div>
               ) : (
-                <button 
-                  onClick={handleGetMission}
-                  className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 active:scale-95 transition-transform flex items-center justify-center gap-3"
-                >
-                  <span className="material-symbols-outlined text-[20px]">auto_fix</span>
-                  Revelar Minha Missão
-                </button>
+                <div className="relative z-10">
+                  <p className={`text-sm font-medium mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pronto para aplicar a apologética na vida real hoje?</p>
+                  <button 
+                    onClick={handleGetMission}
+                    disabled={isRevealing}
+                    className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  >
+                    {isRevealing ? (
+                      <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[20px]">auto_fix</span>
+                        Revelar Minha Missão
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
+              
+              {/* Efeito de fundo decorativo */}
+              <div className="absolute top-0 right-0 size-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
            </div>
         </section>
       </main>

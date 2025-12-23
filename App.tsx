@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppContent, Comment, Expresso, UserProfile } from './types';
@@ -37,12 +38,15 @@ const App: React.FC = () => {
   const [db, setDb] = useState<any>(null);
 
   useEffect(() => {
+    let conversasRef: any = null;
+
     if (typeof firebase !== 'undefined' && !firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
       setDb(database);
 
-      database.ref('conversas').on('value', (snapshot: any) => {
+      conversasRef = database.ref('conversas');
+      conversasRef.on('value', (snapshot: any) => {
         const val = snapshot.val();
         if (val) {
           const allComments: Comment[] = [];
@@ -115,7 +119,10 @@ const App: React.FC = () => {
             lines.forEach((line, index) => {
               const parts = line.split('\t');
               if (!parts[0] || parts[0].trim() === "") return;
+              
               const type = parts[7]?.trim()?.toUpperCase() || "EXPRESSO";
+              const isClassicVal = parts[11]?.trim()?.toUpperCase();
+              
               if (type === "MISSAO") {
                 missions.push(parts[1]?.trim() || parts[0]?.trim());
               } else {
@@ -130,9 +137,9 @@ const App: React.FC = () => {
                   readingTime: parts[5]?.trim() || "2 MIN",
                   bibleReference: parts[6]?.trim() || "",
                   categoryType: type,
+                  isClassic: isClassicVal === 'TRUE' || isClassicVal === 'VERDADEIRO',
                   tags: [parts[3]?.toLowerCase() || 'geral'],
                   status: 'published',
-                  isClassic: false,
                   analogy: parts[8] ? {
                     icon: parts[8]?.trim() || "bolt",
                     title: parts[9]?.trim() || "Analogia",
@@ -149,13 +156,25 @@ const App: React.FC = () => {
       finally { setLoading(false); }
     };
     initializeApp();
+
+    return () => {
+      if (conversasRef) conversasRef.off('value');
+    };
   }, []);
 
   const mergedContent = useMemo(() => {
     if (!data || !userProfile) return null;
+    
+    const expressosList = [
+      ...userCreatedPosts.filter(p => p.status === 'published' && p.categoryType !== 'APROFUNDAR'),
+      ...sheetPosts.filter(p => p.categoryType === 'EXPRESSO'),
+      ...data.expressos
+    ];
+
     return {
       ...data,
-      expressos: [...userCreatedPosts.filter(p => p.status === 'published'), ...sheetPosts, ...data.expressos],
+      expressos: expressosList,
+      sheetPosts: sheetPosts,
       profile: userProfile
     };
   }, [data, userCreatedPosts, userProfile, sheetPosts]);

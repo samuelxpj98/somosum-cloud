@@ -1,3 +1,4 @@
+
 {
   "branding": {
     "appName": "SOMOSUM",
@@ -15,7 +16,7 @@
       "category": "HISTÓRIA",
       "categoryFull": "HISTÓRIA & MANUSCRITOS",
       "title": "A Bíblia é realmente confiável?",
-      "subtitle": "Como sabemos que o texto não foi alterado com o tempo?",
+      "subtitle": "Como sabemos que o text não foi alterado com o tempo?",
       "imageUrl": "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800",
       "readingTime": "1.2 MIN",
       "bibleReference": "2 Timóteo 3:16",
@@ -29,24 +30,6 @@
       "content": "A Bíblia possui mais de 5.800 manuscritos gregos apenas do Novo Testamento. Quando comparamos essas cópias, a consistência é de 99,5%, superando obras clássicas como a Ilíada de Homero ou os escritos de Platão."
     },
     {
-      "id": "7",
-      "category": "HISTÓRIA",
-      "categoryFull": "HISTÓRIA & EVIDÊNCIAS",
-      "title": "Jesus existiu de verdade?",
-      "subtitle": "O que os historiadores seculares dizem sobre Jesus?",
-      "imageUrl": "https://images.unsplash.com/photo-1590076175573-ac6788879555?auto=format&fit=crop&q=80&w=800",
-      "readingTime": "1.8 MIN",
-      "bibleReference": "Gálatas 4:4",
-      "tags": ["História", "Jesus"],
-      "isClassic": false,
-      "analogy": {
-        "icon": "account_balance",
-        "title": "O rastro na areia.",
-        "text": "Você não vê o vento, mas vê o rastro que ele deixa. Historiadores como Flávio Josefo e Tácito não eram cristãos, mas registraram que Jesus viveu e foi crucificado."
-      },
-      "content": "A existência de Jesus é um fato aceito por quase 100% dos historiadores sérios. Além dos Evangelhos, temos fontes romanas (Tácito, Plínio o Jovem) e judaicas (Flávio Josefo) que mencionam o 'Cristo' e seu impacto no primeiro século."
-    },
-    {
       "id": "8",
       "category": "IDENTIDADE",
       "categoryFull": "MORALIDADE OBJETIVA",
@@ -55,6 +38,7 @@
       "imageUrl": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800",
       "readingTime": "2 MIN",
       "isClassic": true,
+      "bibleReference": "Romanos 2:15",
       "analogy": {
         "icon": "balance",
         "title": "O Padrão Áureo",

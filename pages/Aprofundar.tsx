@@ -6,7 +6,7 @@ import { Expresso, AppContent } from '../types';
 interface AprofundarProps {
   userPosts: Expresso[];
   readPostIds: string[];
-  content: AppContent;
+  content: any; 
 }
 
 export const FIXED_CATEGORIES = [
@@ -22,6 +22,23 @@ export const FIXED_CATEGORIES = [
 
 export const DEEP_DIVE_DATA: Expresso[] = [
   {
+    id: '1710000000006',
+    category: 'Evidências',
+    categoryFull: 'BIBLIOLOGIA • INERRÂNCIA',
+    title: 'A Autoridade Inerrante das Escrituras',
+    subtitle: 'Por que cremos que a Bíblia é a palavra de Deus inspirada e sem erros em seus originais?',
+    imageUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800',
+    readingTime: '10 min',
+    content: 'A inerrância bíblica é a doutrina de que a Bíblia, em seus manuscritos originais, é isenta de erros em tudo o que afirma. Isso não significa que ela não use metáforas ou linguagem fenomenológica (como dizer que o sol "nasce"), mas que sua verdade é absoluta em questões de fé, história e moral.\n\nA base para essa crença reside no próprio caráter de Deus: se Deus é a Verdade e a Bíblia é soprada por Ele (Teopneustos), logo, a Bíblia deve ser verdadeira. A autoridade da Bíblia não depende da aprovação humana, mas de sua origem divina. Ela é a regra de fé e prática que governa a vida cristã e nos apresenta o plano de salvação de forma clara e infalível.\n\nHistoricamente, a Igreja tem sustentado que as Escrituras são o meio pelo qual Deus se comunica com a humanidade de forma proposicional. Negar a inerrância é, em última instância, questionar se Deus pode ou quer falar a verdade de forma compreensível ao homem.',
+    tags: ['Bíblia', 'Evidências'],
+    bibleReference: '2 Timóteo 3:16 - Toda a Escritura é divinamente inspirada e proveitosa para o ensino, para a repreensão, para a correção, para a instrução em justiça.',
+    analogy: {
+      icon: 'map',
+      title: 'O Mapa e o Terreno',
+      text: 'Imagine um mapa perfeito de uma cidade. Se o mapa diz que há uma ponte, mas você não a vê, o erro não está no mapa, mas na sua visão ou localização. A Bíblia é o mapa infalível de Deus para a realidade.'
+    }
+  },
+  {
     id: '1710000000005',
     category: 'Fé e Ciência',
     categoryFull: 'APOLOGÉTICA • COSMOLOGIA',
@@ -29,77 +46,14 @@ export const DEEP_DIVE_DATA: Expresso[] = [
     subtitle: 'Entenda como a origem do universo aponta para um criador inteligente através da lógica e ciência.',
     imageUrl: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800',
     readingTime: '5 min',
-    content: 'O argumento cosmológico Kalām é um dos pilares da apologética moderna. Ele postula que: 1. Tudo o que começa a existir tem uma causa. 2. O universo começou a existir. 3. Portanto, o universo tem uma causa.\n\nA ciência moderna, através da Teoria do Big Bang e da Segunda Lei da Termodinâmica, corrobora a ideia de que o universo teve um início absoluto no tempo e no espaço. Se o universo teve um início, ele não pode ter se auto-causado, exigindo um agente transcendente, imaterial e poderoso fora do tempo.',
+    content: 'O argumento cosmológico Kalām postula que: 1. Tudo o que começa a existir tem uma causa. 2. O universo começou a existir. 3. Portanto, o universo tem uma causa.\n\nA ciência moderna corrobora a ideia de que o universo teve um início absoluto no tempo e no espaço. Se o universo teve um início, ele não pode ter se auto-causado, exigindo um agente transcendente fora do tempo.',
     tags: ['Fé e Ciência'],
-    bibleReference: 'Gênesis 1:1',
-    resources: [
-      { title: 'Em Guarda', description: 'William Lane Craig explica os argumentos teístas de forma acessível.', type: 'book', url: 'https://www.google.com/search?q=livro+em+guarda+william+lane+craig' },
-      { title: 'Reasonable Faith', description: 'Site oficial com debates e artigos científicos sobre o tema.', type: 'link', url: 'https://www.reasonablefaith.org' }
-    ]
-  },
-  {
-    id: '1710000000004',
-    category: 'Dor',
-    categoryFull: 'TEODICEIA • PROBLEMA DO MAL',
-    title: 'Deus e o Sofrimento',
-    subtitle: 'Uma análise profunda sobre o porquê da dor em um mundo criado por um Deus de amor.',
-    imageUrl: 'https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?auto=format&fit=crop&q=80&w=800',
-    readingTime: '8 min',
-    content: 'A questão do sofrimento é, talvez, a maior barreira intelectual e emocional para a fé. Se Deus é bom, por que não para o mal? Se é poderoso, por que não o impede?\n\nA resposta cristã envolve a compreensão do livre-arbítrio e da queda. Deus criou um mundo onde o amor é possível, e o amor exige a liberdade de escolha. O mal é a ausência ou distorção do bem. Além disso, a Bíblia nos mostra um Deus que não observa o sofrimento de longe, mas entra nele através de Jesus Cristo na cruz.',
-    tags: ['Dor'],
-    bibleReference: 'João 16:33',
-    resources: [
-      { title: 'O Problema da Dor', description: 'C.S. Lewis explora a natureza intelectual do sofrimento.', type: 'book', url: 'https://www.google.com/search?q=livro+o+problema+da+dor+cs+lewis' },
-      { title: 'Caminhando com Deus na Dor', description: 'Timothy Keller aborda como lidar com a tragédia.', type: 'book', url: 'https://www.google.com/search?q=caminhando+com+deus+na+dor+e+no+sofrimento+keller' }
-    ]
-  },
-  {
-    id: '1710000000003',
-    category: 'Identidade',
-    categoryFull: 'ANTROPOLOGIA • ÉTICA MORAL',
-    title: 'A Origem da Moralidade',
-    subtitle: 'Valores morais objetivos exigem um legislador moral soberano. De onde vem o nosso senso de justiça?',
-    imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800',
-    readingTime: '7 min',
-    content: 'Todos nós temos um senso de que certas coisas são realmente erradas e outras realmente certas. Mas se somos apenas o resultado de processos evolucionários cegos, a moralidade seria apenas uma ferramenta de sobrevivência, não uma verdade objetiva.\n\nO argumento moral sugere que a existência de leis morais universais aponta para um Doador da Lei Moral. Sem Deus, o "certo" e o "errado" tornam-se meras preferências culturais ou biológicas.',
-    tags: ['Identidade'],
-    bibleReference: 'Romanos 2:15',
-    resources: [
-      { title: 'Mero Cristianismo', description: 'A clássica defesa da moralidade objetiva por C.S. Lewis.', type: 'book', url: 'https://www.google.com/search?q=mero+cristianismo+cs+lewis' },
-      { title: 'The Moral Argument', description: 'Vídeo animado detalhando a lógica do argumento moral.', type: 'video', url: 'https://www.youtube.com/watch?v=OxiAikEk2vU' }
-    ]
-  },
-  {
-    id: '1710000000002',
-    category: 'Fé e Cultura',
-    categoryFull: 'SOCIOLOGIA • PÓS-MODERNIDADE',
-    title: 'Cristianismo e Modernidade',
-    subtitle: 'Como manter os valores cristãos relevantes em uma cultura que muda constantemente?',
-    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800',
-    readingTime: '10 min',
-    content: 'Vivemos na chamada "modernidade líquida", onde as instituições e verdades absolutas são questionadas. O desafio do cristão hoje não é apenas defender a fé, mas vivê-la de forma que faça sentido em um contexto secularizado.\n\nA cultura não é algo a ser evitado, mas redimido. Precisamos ser como os filhos de Issacar, que conheciam o seu tempo e sabiam o que Israel devia fazer.',
-    tags: ['Fé e Cultura'],
-    bibleReference: '1 Crônicas 12:32',
-    resources: [
-      { title: 'A Cidade de Deus', description: 'A obra monumental de Santo Agostinho sobre fé e sociedade.', type: 'book', url: 'https://www.google.com/search?q=a+cidade+de+deus+santo+agostinho' },
-      { title: 'Cristianismo e Cultura', description: 'Ensaios de T.S. Eliot sobre a base cristã da civilização.', type: 'book', url: 'https://www.google.com/search?q=notas+para+uma+definicao+de+cultura+ts+eliot' }
-    ]
-  },
-  {
-    id: '1710000000001',
-    category: 'Evidências',
-    categoryFull: 'CRÍTICA TEXTUAL • ARQUEOLOGIA',
-    title: 'Manuscritos do Mar Morto',
-    subtitle: 'A descoberta arqueológica que confirmou a precisão milenar das Escrituras Sagradas.',
-    imageUrl: 'https://images.unsplash.com/photo-1533158326339-7f3cf2404354?auto=format&fit=crop&q=80&w=800',
-    readingTime: '6 min',
-    content: 'Descobertos in 1947, os Manuscritos do Mar Morto são considerados a maior descoberta arqueológica do século XX. Eles contêm cópias de quase todos os livros do Antigo Testamento, datando de centenas de anos antes de Cristo.\n\nA comparação desses manuscritos com as traduções modernas provou que a Bíblia foi transmitida com uma precisão incrível ao longo de dois mil anos, refutando a ideia de que o texto foi corrompido.',
-    tags: ['Evidências'],
-    bibleReference: 'Isaías 40:8',
-    resources: [
-      { title: 'Evidência que Exige um Veredito', description: 'Josh McDowell documenta a confiabilidade histórica da Bíblia.', type: 'book', url: 'https://www.google.com/search?q=evidencia+que+exige+um+veredito+josh+mcdowell' },
-      { title: 'Digital Dead Sea Scrolls', description: 'Acesse as imagens em alta resolução dos manuscritos.', type: 'link', url: 'http://dss.collections.imj.org.il/' }
-    ]
+    bibleReference: 'Gênesis 1:1 - No princípio, criou Deus os céus e a terra.',
+    analogy: {
+      icon: 'flare',
+      title: 'A Explosão Ordenada',
+      text: 'Uma explosão em uma gráfica nunca produziria um dicionário. Se o universo "explodiu" no Big Bang e gerou vida e ordem, deve haver uma mente por trás organizando os átomos.'
+    }
   }
 ];
 
@@ -150,18 +104,14 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
   const [showAll, setShowAll] = useState(false);
   const isDark = content.profile.isDarkMode;
 
-  // Consolida e ordena todos os posts (Usuário + Estáticos)
   const allAprofundamentos = useMemo(() => {
-    const publishedUserAprofundamentos = userPosts.filter(p => p.category === 'APROFUNDAMENTO' && p.status === 'published');
-    return [...publishedUserAprofundamentos, ...DEEP_DIVE_DATA].sort((a, b) => {
-      const idA = isNaN(Number(a.id)) ? 0 : Number(a.id);
-      const idB = isNaN(Number(b.id)) ? 0 : Number(b.id);
-      if (idA !== idB) return idB - idA;
+    const publishedUserAprofundamentos = userPosts.filter(p => (p.category === 'APROFUNDAMENTO' || p.categoryType === 'APROFUNDAR') && p.status === 'published');
+    const sheetAprofundamentos = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
+    return [...publishedUserAprofundamentos, ...sheetAprofundamentos, ...DEEP_DIVE_DATA].sort((a, b) => {
       return b.id.localeCompare(a.id);
     });
-  }, [userPosts]);
+  }, [userPosts, content.sheetPosts]);
 
-  // Aplica o filtro de categoria primeiro
   const filteredItems = useMemo(() => {
     if (filter === 'Todos') return allAprofundamentos;
     return allAprofundamentos.filter(item => 
@@ -171,19 +121,9 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
     );
   }, [filter, allAprofundamentos]);
 
-  // Define quais itens mostrar baseado no estado showAll
   const displayedItems = useMemo(() => {
-    return showAll ? filteredItems : filteredItems.slice(0, 5);
+    return showAll ? filteredItems : filteredItems.slice(0, 10);
   }, [filteredItems, showAll]);
-
-  const hasMore = filteredItems.length > 5;
-
-  const handleFilterChange = (newFilter: string) => {
-    setFilter(newFilter);
-    setIsMenuOpen(false);
-    setShowAll(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   useEffect(() => {
     if (location.hash) {
@@ -200,7 +140,6 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
 
   return (
     <div className={`min-h-screen pb-32 relative transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      {/* Menu de Categorias */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100] flex items-start justify-end p-4">
           <div className="fixed inset-0 bg-slate-950/20 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsMenuOpen(false)}></div>
@@ -217,8 +156,8 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
               {FIXED_CATEGORIES.map((cat) => (
                 <button
                   key={cat.label}
-                  onClick={() => handleFilterChange(cat.label)}
-                  className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all active:scale-95 ${
+                  onClick={() => { setFilter(cat.label); setIsMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${
                     filter === cat.label 
                       ? 'bg-blue-600 text-white' 
                       : (isDark ? 'bg-transparent text-slate-300 hover:bg-slate-700' : 'bg-transparent text-slate-600 hover:bg-slate-50')
@@ -230,7 +169,6 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
                   <span className={`text-xs font-bold uppercase tracking-tight ${filter === cat.label ? 'font-black' : ''}`}>
                     {cat.label}
                   </span>
-                  {filter === cat.label && <span className="material-symbols-outlined ml-auto text-[16px]">check</span>}
                 </button>
               ))}
             </div>
@@ -244,24 +182,8 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
         <button onClick={() => navigate('/home')} className={`size-10 rounded-full flex items-center justify-center active:bg-slate-100 transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
           <span className="material-symbols-outlined text-[28px]">arrow_back</span>
         </button>
-        
-        <div className="flex flex-col items-center">
-          <h1 className={`text-sm font-black font-display tracking-widest uppercase leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>Aprofundamento</h1>
-          {filter !== 'Todos' && (
-            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1 bg-blue-50 px-2 py-0.5 rounded-full">{filter}</span>
-          )}
-        </div>
-
-        <button 
-          onClick={() => setIsMenuOpen(true)}
-          className={`size-10 rounded-full flex items-center justify-center transition-all ${
-            isMenuOpen 
-              ? 'bg-blue-600 text-white' 
-              : (isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-600 border border-slate-100 shadow-sm')
-          }`}
-        >
-          <span className="material-symbols-outlined text-[22px]">filter_list</span>
-        </button>
+        <div className="flex flex-col items-center"><h1 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Aprofundar</h1></div>
+        <button onClick={() => setIsMenuOpen(true)} className="size-10 flex items-center justify-center"><span className="material-symbols-outlined text-[24px]">filter_list</span></button>
       </header>
 
       <main className="px-6 pt-8">
@@ -270,26 +192,6 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
             <ArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />
           ))}
         </div>
-
-        {hasMore && !showAll && (
-          <div className="mt-8 mb-12 flex justify-center">
-            <button 
-              onClick={() => setShowAll(true)}
-              className="px-10 py-5 bg-blue-600 text-white rounded-[28px] font-black text-[13px] uppercase tracking-widest shadow-xl shadow-blue-500/10 active:scale-95 transition-all flex items-center gap-3 animate-in zoom-in-95 duration-500"
-            >
-              <span className="material-symbols-outlined text-[20px]">expand_more</span>
-              Ver tudo ({filteredItems.length - 5} posts restantes)
-            </button>
-          </div>
-        )}
-
-        {filteredItems.length === 0 && (
-          <div className="py-24 text-center opacity-30 flex flex-col items-center">
-            <span className="material-symbols-outlined text-7xl mb-4 text-slate-200">sentiment_dissatisfied</span>
-            <p className={`font-black text-xs uppercase tracking-[0.2em] ${isDark ? 'text-white' : 'text-slate-900'}`}>Nenhum artigo encontrado</p>
-            <button onClick={() => handleFilterChange('Todos')} className="mt-4 text-blue-600 font-black text-[10px] uppercase underline">Limpar Filtros</button>
-          </div>
-        )}
       </main>
     </div>
   );
