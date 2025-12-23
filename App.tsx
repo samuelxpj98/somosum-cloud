@@ -10,6 +10,21 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 
+// Firebase Config de acordo com o solicitado
+const firebaseConfig = {
+    apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
+    authDomain: "somosum-comentarios.firebaseapp.com",
+    projectId: "somosum-comentarios",
+    storageBucket: "somosum-comentarios.firebasestorage.app",
+    messagingSenderId: "125576297132",
+    appId: "1:125576297132:web:ad73029f7373701959bd09",
+    measurementId: "G-9TX3VBBXPE",
+    databaseURL: "https://somosum-comentarios-default-rtdb.firebaseio.com/" 
+};
+
+// Declarar globalmente para o TypeScript reconhecer o Firebase injetado via script
+declare const firebase: any;
+
 const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
 
 const App: React.FC = () => {
@@ -21,8 +36,44 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
   const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
+  const [db, setDb] = useState<any>(null);
 
   useEffect(() => {
+    // Inicializar Firebase
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+      setDb(database);
+
+      // Ouvir TODAS as conversas em tempo real
+      database.ref('conversas').on('value', (snapshot: any) => {
+        const val = snapshot.val();
+        if (val) {
+          const allComments: Comment[] = [];
+          Object.keys(val).forEach(postId => {
+            const postComments = val[postId];
+            Object.keys(postComments).forEach(commentId => {
+              const c = postComments[commentId];
+              allComments.push({
+                id: commentId,
+                postId: postId,
+                userName: c.usuario || c.userName || "Anônimo",
+                userAvatar: c.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.usuario}`,
+                userInfo: c.userInfo || "Membro",
+                text: c.texto || c.text || "",
+                likes: c.likes || 0,
+                time: c.hora ? new Date(c.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Agora",
+                isLiked: false // Pode ser refinado com lógica local
+              });
+            });
+          });
+          // Ordenar por mais recentes
+          allComments.sort((a, b) => b.id.localeCompare(a.id));
+          setGlobalComments(allComments);
+        }
+      });
+    }
+
     const initializeApp = async () => {
       try {
         const savedProfile = localStorage.getItem('user_profile');
@@ -59,7 +110,8 @@ const App: React.FC = () => {
           if (response.ok) {
             const json = await response.json();
             setData(json);
-            setGlobalComments(json.comments || []);
+            // Se o firebase falhar, usamos os do JSON como fallback inicial
+            if (globalComments.length === 0) setGlobalComments(json.comments || []);
           }
         } catch (e) { console.error("Erro no conteudo.json"); }
 
@@ -163,10 +215,24 @@ const App: React.FC = () => {
   };
 
   const handleAddComment = (newComment: Comment) => {
-    setGlobalComments(prev => [newComment, ...prev]);
+    if (db && newComment.postId) {
+      // Enviar para o Firebase
+      db.ref('conversas/' + newComment.postId).push({
+        usuario: newComment.userName,
+        texto: newComment.text,
+        userAvatar: newComment.userAvatar,
+        userInfo: newComment.userInfo,
+        hora: Date.now(),
+        likes: 0
+      });
+    } else {
+      // Fallback local se o DB não estiver pronto
+      setGlobalComments(prev => [newComment, ...prev]);
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
+    // Sincronizar curtida no Firebase se necessário (pode ser expandido)
     setGlobalComments(prev => prev.map(c => 
       c.id === commentId 
         ? { ...c, likes: c.isLiked ? c.likes - 1 : c.likes + 1, isLiked: !c.isLiked } 
