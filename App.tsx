@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppContent, Comment, Expresso, UserProfile } from './types';
@@ -11,19 +10,6 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
-    authDomain: "somosum-comentarios.firebaseapp.com",
-    projectId: "somosum-comentarios",
-    storageBucket: "somosum-comentarios.firebasestorage.app",
-    messagingSenderId: "125576297132",
-    appId: "1:125576297132:web:ad73029f7373701959bd09",
-    measurementId: "G-9TX3VBBXPE",
-    databaseURL: "https://somosum-comentarios-default-rtdb.firebaseio.com/" 
-};
-
-declare const firebase: any;
-
 const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
 
 const App: React.FC = () => {
@@ -35,46 +21,12 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
   const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
-  const [db, setDb] = useState<any>(null);
 
+  // Efeito para carregar dados iniciais e comentários do localStorage
   useEffect(() => {
-    let conversasRef: any = null;
-
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-      setDb(database);
-
-      conversasRef = database.ref('conversas');
-      conversasRef.on('value', (snapshot: any) => {
-        const val = snapshot.val();
-        if (val) {
-          const allComments: Comment[] = [];
-          Object.keys(val).forEach(postId => {
-            const postComments = val[postId];
-            Object.keys(postComments).forEach(commentId => {
-              const c = postComments[commentId];
-              allComments.push({
-                id: commentId,
-                postId: postId,
-                userName: c.usuario || c.userName || "Anônimo",
-                userAvatar: c.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.usuario || commentId}`,
-                userInfo: c.userInfo || "Membro da Comunidade",
-                text: c.texto || c.text || "",
-                likes: c.likes || 0,
-                time: c.hora ? new Date(c.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Agora",
-                isLiked: false
-              });
-            });
-          });
-          allComments.sort((a, b) => b.id.localeCompare(a.id));
-          setGlobalComments(allComments);
-        }
-      });
-    }
-
     const initializeApp = async () => {
       try {
+        // Carrega Perfil
         const savedProfile = localStorage.getItem('user_profile');
         let initialProfile: UserProfile;
         if (savedProfile) {
@@ -96,11 +48,19 @@ const App: React.FC = () => {
         }
         setUserProfile(initialProfile);
 
+        // Carrega Comentários Salvos Localmente
+        const savedComments = localStorage.getItem('local_comments');
+        if (savedComments) {
+          setGlobalComments(JSON.parse(savedComments));
+        }
+
         const savedUserPosts = localStorage.getItem('user_created_posts');
         if (savedUserPosts) setUserCreatedPosts(JSON.parse(savedUserPosts));
+        
         const savedReadPosts = localStorage.getItem('read_posts');
         if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
 
+        // Carrega Conteúdo Estático
         try {
           const response = await fetch('conteudo.json');
           if (response.ok) {
@@ -109,6 +69,7 @@ const App: React.FC = () => {
           }
         } catch (e) { console.error("Erro no conteudo.json"); }
 
+        // Carrega Planilha
         if (GOOGLE_SHEETS_TSV_URL) {
           try {
             const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
@@ -156,11 +117,14 @@ const App: React.FC = () => {
       finally { setLoading(false); }
     };
     initializeApp();
-
-    return () => {
-      if (conversasRef) conversasRef.off('value');
-    };
   }, []);
+
+  // Persiste comentários localmente sempre que mudarem
+  useEffect(() => {
+    if (globalComments.length > 0) {
+      localStorage.setItem('local_comments', JSON.stringify(globalComments));
+    }
+  }, [globalComments]);
 
   const mergedContent = useMemo(() => {
     if (!data || !userProfile) return null;
@@ -199,28 +163,13 @@ const App: React.FC = () => {
   };
 
   const handleAddComment = (newComment: Comment) => {
-    if (db && newComment.postId) {
-      db.ref('conversas/' + newComment.postId).push({
-        usuario: newComment.userName,
-        texto: newComment.text,
-        userAvatar: newComment.userAvatar,
-        userInfo: newComment.userInfo,
-        hora: Date.now(),
-        likes: 0
-      });
-    }
+    setGlobalComments(prev => [newComment, ...prev]);
   };
 
-  const handleLikeComment = (commentId: string, postId?: string) => {
-    if (db && postId) {
-      const commentRef = db.ref(`conversas/${postId}/${commentId}`);
-      commentRef.transaction((currentData: any) => {
-        if (currentData) {
-          currentData.likes = (currentData.likes || 0) + 1;
-        }
-        return currentData;
-      });
-    }
+  const handleLikeComment = (commentId: string) => {
+    setGlobalComments(prev => prev.map(c => 
+      c.id === commentId ? { ...c, likes: c.likes + 1, isLiked: true } : c
+    ));
   };
 
   const markAsRead = (id: string) => {
