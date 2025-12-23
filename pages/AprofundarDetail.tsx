@@ -1,8 +1,8 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, Comment } from '../types';
 import { DEEP_DIVE_DATA } from './Aprofundar';
+import AIApologist from '../components/AIApologist';
 
 interface AprofundarDetailProps {
   content: AppContent;
@@ -56,6 +56,7 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
   const isDark = content.profile.isDarkMode;
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [showAI, setShowAI] = useState(false);
 
   const displayItem = useMemo(() => {
     return DEEP_DIVE_DATA.find(e => e.id === id) || content.expressos.find(e => e.id === id) || (content as any).sheetPosts?.find((e: any) => e.id === id);
@@ -63,7 +64,6 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
 
   const rootComments = comments.filter(c => c.postId === id && !c.parentId);
 
-  // Sanitização de texto para garantir que as quebras de linha da planilha (Alt+Enter) sejam respeitadas
   const processedBody = useMemo(() => {
     if (!displayItem) return '';
     return displayItem.content.replace(/\\n/g, '\n').trim();
@@ -90,7 +90,7 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-      <header className={`sticky top-0 z-50 flex items-center justify-between px-6 py-5 ${isDark ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-40 flex items-center justify-between px-6 py-5 ${isDark ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-md`}>
         <button onClick={() => navigate(-1)} className={`size-10 rounded-full flex items-center justify-center shadow-sm border active:scale-90 transition-transform ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100 text-slate-900'}`}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -100,7 +100,6 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
       </header>
 
       <main className="px-6 py-4">
-        {/* Hierarquia Visual Padronizada */}
         <div className="mb-8 text-center flex flex-col items-center gap-3">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {displayItem.categoryFull || displayItem.category}
@@ -133,7 +132,6 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
           </div>
         )}
 
-        {/* Texto com preservação de quebras de linha */}
         <div className={`whitespace-pre-line mb-12 text-[17px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
           {processedBody}
         </div>
@@ -150,12 +148,11 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
           </div>
         )}
 
-        {/* Interações */}
         <div className="flex items-center justify-between gap-4 mb-12">
           <button onClick={() => id && onToggleLike(id)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 active:scale-95 transition-all ${isLiked ? 'text-red-500 border-red-100 bg-red-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "" }}>favorite</span> <span className="text-[10px] font-black uppercase">Curtir</span>
           </button>
-          <button onClick={() => setShowCommentBox(!showCommentBox)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 active:scale-95 transition-all ${showCommentBox ? 'text-blue-600 border-blue-100 bg-blue-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
+          <button onClick={() => setShowCommentBox(!showCommentBox)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 transition-all active:scale-95 ${showCommentBox ? 'text-blue-600 border-blue-100 bg-blue-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
             <span className="material-symbols-outlined">chat_bubble</span> <span className="text-[10px] font-black uppercase">Opinar</span>
           </button>
           <button onClick={() => id && onToggleSave(id)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 active:scale-95 transition-all ${isSaved ? 'text-amber-600 border-amber-100 bg-amber-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
@@ -184,6 +181,24 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
           <span className="material-symbols-outlined text-[32px]">check_circle</span>
         </div>
       </main>
+
+      {/* Floating Action Button for AI Mentor */}
+      <button 
+        onClick={() => setShowAI(true)}
+        className="fixed bottom-28 right-6 size-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform hover:bg-blue-700 animate-bounce"
+        style={{ animationDuration: '3s' }}
+      >
+        <span className="material-symbols-outlined text-[28px]">smart_toy</span>
+      </button>
+
+      {showAI && (
+        <AIApologist 
+          articleTitle={displayItem.title}
+          articleContent={displayItem.content}
+          isDarkMode={isDark}
+          onClose={() => setShowAI(false)}
+        />
+      )}
     </div>
   );
 };

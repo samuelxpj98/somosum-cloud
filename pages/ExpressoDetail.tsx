@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent, Comment } from '../types';
+import AIApologist from '../components/AIApologist';
 
 interface ExpressoDetailProps {
   content: AppContent;
@@ -56,10 +56,10 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
   const isSaved = id ? content.profile.savedPostIds.includes(id) : false;
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [showAI, setShowAI] = useState(false);
 
   const rootComments = comments.filter(c => c.postId === id && !c.parentId);
   
-  // Sanitização de texto para garantir que as quebras de linha da planilha (Alt+Enter) sejam respeitadas
   const processedBody = useMemo(() => {
     if (!item) return '';
     return item.content.replace(/\\n/g, '\n').trim();
@@ -90,7 +90,7 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-      <header className={`sticky top-0 z-50 flex items-center justify-between px-6 py-5 ${isDark ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-md`}>
+      <header className={`sticky top-0 z-40 flex items-center justify-between px-6 py-5 ${isDark ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-md`}>
         <button onClick={() => navigate(-1)} className={`size-10 rounded-full flex items-center justify-center shadow-sm border active:scale-90 transition-transform ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100 text-slate-900'}`}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -100,7 +100,6 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
       </header>
 
       <main className="px-6 py-4">
-        {/* Hierarquia Visual Padronizada */}
         <div className="mb-8 text-center flex flex-col items-center gap-3">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {item.categoryFull || item.category}
@@ -133,7 +132,6 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
           </div>
         )}
 
-        {/* Texto com preservação de quebras de linha */}
         <div className={`whitespace-pre-line mb-12 text-[17px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
           {processedBody}
         </div>
@@ -181,6 +179,24 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
           <span className="material-symbols-outlined text-[32px]">check_circle</span>
         </div>
       </main>
+
+      {/* Floating Action Button for AI Mentor */}
+      <button 
+        onClick={() => setShowAI(true)}
+        className="fixed bottom-28 right-6 size-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform hover:bg-blue-700 animate-bounce"
+        style={{ animationDuration: '3s' }}
+      >
+        <span className="material-symbols-outlined text-[28px]">smart_toy</span>
+      </button>
+
+      {showAI && (
+        <AIApologist 
+          articleTitle={item.title}
+          articleContent={item.content}
+          isDarkMode={isDark}
+          onClose={() => setShowAI(false)}
+        />
+      )}
     </div>
   );
 };
