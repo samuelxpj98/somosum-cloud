@@ -8,14 +8,26 @@ interface HomeProps {
 }
 
 const MISSIONS = [
-  "Memorize 1 Pedro 3:15 hoje e pense em como aplicá-lo.",
-  "Pesquise sobre o 'Argumento do Ajuste Fino' do universo.",
-  "Perunte a um amigo: 'Qual sua maior dúvida sobre a existência de Deus?'",
-  "Escreva 3 motivos históricos pelos quais confiamos nos Evangelhos.",
-  "Assista a um vídeo curto sobre a Ressurreição de Jesus.",
-  "Leia Romanos 1:20 e observe a criação ao seu redor hoje.",
-  "Desafio: Explique a um familiar o que é 'Apologética' em 1 minuto.",
-  "Pesquise sobre quem foi C.S. Lewis e sua contribuição para a fé."
+  "Memorize 1 Pedro 3:15 hoje e pense em como aplicá-lo em uma conversa real.",
+  "Pesquise sobre o 'Argumento do Ajuste Fino' (Fine-Tuning) do universo.",
+  "Pergunte a um amigo: 'Qual sua maior dúvida sobre a existência de Deus?' e apenas ouça.",
+  "Escreva 3 motivos históricos pelos quais confiamos na veracidade dos Evangelhos.",
+  "Assista a um vídeo curto sobre a Ressurreição de Jesus sob a ótica jurídica.",
+  "Leia Romanos 1:20 e tire uma foto de algo na criação que te lembre a glória de Deus.",
+  "Desafio: Explique a um familiar o que é 'Apologética' em menos de 1 minuto.",
+  "Pesquise sobre quem foi C.S. Lewis e como ele passou do ateísmo ao cristianismo.",
+  "Analise o argumento 'Moral' para a existência de Deus.",
+  "Hoje, ore por uma pessoa que você sabe que tem dificuldades intelectuais com a fé.",
+  "Leia sobre a descoberta dos Manuscritos do Mar Morto.",
+  "Tente explicar a Trindade usando uma analogia (e descubra por que todas falham!).",
+  "Reflita: Como o mal no mundo pode ser um argumento para a existência de um padrão moral (Deus)?",
+  "Descubra o que significa a 'Suficiência das Escrituras'.",
+  "Compartilhe um dos 'Expressos' do app com alguém hoje no WhatsApp.",
+  "Leia o Salmo 19:1 e medite na relação entre Astronomia e Fé.",
+  "Pesquise o termo 'Teodiceia' e entenda o que ele significa no estudo da dor.",
+  "Tire 5 minutos para agradecer por uma dúvida que você já conseguiu sanar.",
+  "Leia sobre a vida de William Lane Craig ou Alister McGrath.",
+  "Faça um post no seu Instagram sobre a harmonia entre Razão e Fé."
 ];
 
 const Home: React.FC<HomeProps> = ({ content }) => {
@@ -33,16 +45,15 @@ const Home: React.FC<HomeProps> = ({ content }) => {
       <Header content={content} />
       
       <main className="px-6 space-y-8 mt-6">
-        {/* Nova Seção: Missão Diária (Local & Estática) */}
         <section className="space-y-4 animate-in fade-in duration-500">
-           <div className={`p-6 rounded-[32px] border shadow-sm transition-all ${isDark ? 'bg-blue-600/10 border-blue-500/20' : 'bg-white border-slate-100'}`}>
+           <div className={`p-6 rounded-[32px] border shadow-sm transition-all ${isDark ? 'bg-blue-600/10 border-blue-50/20' : 'bg-white border-slate-100'}`}>
               <div className="flex items-center gap-3 mb-4">
                  <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
                     <span className="material-symbols-outlined text-[20px]">target</span>
                  </div>
                  <div>
                     <h3 className="text-sm font-black uppercase tracking-widest leading-none">Missão de Hoje</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Desafio Prático</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Desafio Prático Local</p>
                  </div>
               </div>
               
@@ -62,7 +73,6 @@ const Home: React.FC<HomeProps> = ({ content }) => {
            </div>
         </section>
 
-        {/* Expresso do Dia Card */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className={`text-xs font-[900] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Destaque do Dia</h3>
@@ -99,7 +109,6 @@ const Home: React.FC<HomeProps> = ({ content }) => {
           </div>
         </section>
 
-        {/* Aprofundamento Card */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className={`text-xs font-[900] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Estudo Profundo</h3>

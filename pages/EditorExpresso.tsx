@@ -18,7 +18,6 @@ const CATEGORY_SUGGESTIONS = [
   { label: 'BATISTA', icon: 'water_drop', color: 'text-cyan-600' },
 ];
 
-// Biblioteca de imagens temáticas para uso estático (Local)
 const LOCAL_COVERS = [
   "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=800&auto=format",
   "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800&auto=format",
@@ -26,7 +25,15 @@ const LOCAL_COVERS = [
   "https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?q=80&w=800&auto=format",
   "https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format",
   "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format",
-  "https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=800&auto=format"
+  "https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1534067783941-51c9c2394834?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1532012197367-e37802001712?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1494059458055-385050f2409d?q=80&w=800&auto=format"
 ];
 
 const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, isDarkMode }) => {
@@ -70,10 +77,8 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
     }
   };
 
-  // Função para gerar capa aleatória de forma 100% local e estática
   const generateLocalImage = () => {
     setIsSelectingImage(true);
-    // Simula um delay de "IA" para manter a experiência do usuário
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * LOCAL_COVERS.length);
       setImagePreview(LOCAL_COVERS[randomIndex]);
@@ -88,7 +93,7 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
       categoryFull: category,
       title: title || 'Sem Título',
       subtitle: analogyText || title.substring(0, 40),
-      imageUrl: imagePreview || 'https://images.unsplash.com/photo-1507413245164-6160d8298b31',
+      imageUrl: imagePreview || LOCAL_COVERS[0],
       content,
       readingTime: '1.5 MIN',
       isClassic: isClassic,
