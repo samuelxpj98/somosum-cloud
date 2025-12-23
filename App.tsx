@@ -10,7 +10,6 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 
-// Firebase Config de acordo com o solicitado
 const firebaseConfig = {
     apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
     authDomain: "somosum-comentarios.firebaseapp.com",
@@ -22,7 +21,6 @@ const firebaseConfig = {
     databaseURL: "https://somosum-comentarios-default-rtdb.firebaseio.com/" 
 };
 
-// Declarar globalmente para o TypeScript reconhecer o Firebase injetado via script
 declare const firebase: any;
 
 const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
@@ -39,13 +37,11 @@ const App: React.FC = () => {
   const [db, setDb] = useState<any>(null);
 
   useEffect(() => {
-    // Inicializar Firebase
     if (typeof firebase !== 'undefined' && !firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
       setDb(database);
 
-      // Ouvir TODAS as conversas em tempo real
       database.ref('conversas').on('value', (snapshot: any) => {
         const val = snapshot.val();
         if (val) {
@@ -58,16 +54,15 @@ const App: React.FC = () => {
                 id: commentId,
                 postId: postId,
                 userName: c.usuario || c.userName || "Anônimo",
-                userAvatar: c.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.usuario}`,
-                userInfo: c.userInfo || "Membro",
+                userAvatar: c.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.usuario || commentId}`,
+                userInfo: c.userInfo || "Membro da Comunidade",
                 text: c.texto || c.text || "",
                 likes: c.likes || 0,
                 time: c.hora ? new Date(c.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Agora",
-                isLiked: false // Pode ser refinado com lógica local
+                isLiked: false
               });
             });
           });
-          // Ordenar por mais recentes
           allComments.sort((a, b) => b.id.localeCompare(a.id));
           setGlobalComments(allComments);
         }
@@ -80,10 +75,7 @@ const App: React.FC = () => {
         let initialProfile: UserProfile;
         if (savedProfile) {
           const parsed = JSON.parse(savedProfile);
-          initialProfile = {
-            ...parsed,
-            likedPostIds: parsed.likedPostIds || []
-          };
+          initialProfile = { ...parsed, likedPostIds: parsed.likedPostIds || [] };
         } else {
           initialProfile = {
             name: "Explorador",
@@ -110,8 +102,6 @@ const App: React.FC = () => {
           if (response.ok) {
             const json = await response.json();
             setData(json);
-            // Se o firebase falhar, usamos os do JSON como fallback inicial
-            if (globalComments.length === 0) setGlobalComments(json.comments || []);
           }
         } catch (e) { console.error("Erro no conteudo.json"); }
 
@@ -120,16 +110,12 @@ const App: React.FC = () => {
             const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
             const tsvText = await sheetRes.text();
             const lines = tsvText.split('\n').slice(1);
-            
             const posts: Expresso[] = [];
             const missions: string[] = [];
-
             lines.forEach((line, index) => {
               const parts = line.split('\t');
               if (!parts[0] || parts[0].trim() === "") return;
-
               const type = parts[7]?.trim()?.toUpperCase() || "EXPRESSO";
-
               if (type === "MISSAO") {
                 missions.push(parts[1]?.trim() || parts[0]?.trim());
               } else {
@@ -155,38 +141,21 @@ const App: React.FC = () => {
                 });
               }
             });
-
             setSheetPosts(posts);
             setDynamicMissions(missions);
-          } catch (err) {
-            console.error("Erro ao carregar planilha:", err);
-          }
+          } catch (err) { console.error("Erro ao carregar planilha:", err); }
         }
-
-      } catch (error) {
-        console.error("Erro crítico na inicialização:", error);
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) { console.error("Erro crítico:", error); }
+      finally { setLoading(false); }
     };
-
     initializeApp();
   }, []);
 
   const mergedContent = useMemo(() => {
     if (!data || !userProfile) return null;
-    
-    const sheetExpressos = sheetPosts.filter(p => p.categoryType === "EXPRESSO");
-    const sheetAprofundamentos = sheetPosts.filter(p => p.categoryType === "APROFUNDAR");
-
     return {
       ...data,
-      expressos: [
-        ...userCreatedPosts.filter(p => p.status === 'published'), 
-        ...sheetExpressos, 
-        ...sheetAprofundamentos, 
-        ...data.expressos
-      ],
+      expressos: [...userCreatedPosts.filter(p => p.status === 'published'), ...sheetPosts, ...data.expressos],
       profile: userProfile
     };
   }, [data, userCreatedPosts, userProfile, sheetPosts]);
@@ -199,24 +168,19 @@ const App: React.FC = () => {
   const toggleSavePost = (id: string) => {
     if (!userProfile) return;
     const isSaved = userProfile.savedPostIds.includes(id);
-    const newSavedIds = isSaved 
-      ? userProfile.savedPostIds.filter(pid => pid !== id)
-      : [...userProfile.savedPostIds, id];
+    const newSavedIds = isSaved ? userProfile.savedPostIds.filter(pid => pid !== id) : [...userProfile.savedPostIds, id];
     updateProfile({ ...userProfile, savedPostIds: newSavedIds, stats: { ...userProfile.stats, savedPosts: newSavedIds.length } });
   };
 
   const toggleLikePost = (id: string) => {
     if (!userProfile) return;
     const isLiked = userProfile.likedPostIds.includes(id);
-    const newLikedIds = isLiked
-      ? userProfile.likedPostIds.filter(pid => pid !== id)
-      : [...userProfile.likedPostIds, id];
+    const newLikedIds = isLiked ? userProfile.likedPostIds.filter(pid => pid !== id) : [...userProfile.likedPostIds, id];
     updateProfile({ ...userProfile, likedPostIds: newLikedIds });
   };
 
   const handleAddComment = (newComment: Comment) => {
     if (db && newComment.postId) {
-      // Enviar para o Firebase
       db.ref('conversas/' + newComment.postId).push({
         usuario: newComment.userName,
         texto: newComment.text,
@@ -225,19 +189,19 @@ const App: React.FC = () => {
         hora: Date.now(),
         likes: 0
       });
-    } else {
-      // Fallback local se o DB não estiver pronto
-      setGlobalComments(prev => [newComment, ...prev]);
     }
   };
 
-  const handleLikeComment = (commentId: string) => {
-    // Sincronizar curtida no Firebase se necessário (pode ser expandido)
-    setGlobalComments(prev => prev.map(c => 
-      c.id === commentId 
-        ? { ...c, likes: c.isLiked ? c.likes - 1 : c.likes + 1, isLiked: !c.isLiked } 
-        : c
-    ));
+  const handleLikeComment = (commentId: string, postId?: string) => {
+    if (db && postId) {
+      const commentRef = db.ref(`conversas/${postId}/${commentId}`);
+      commentRef.transaction((currentData: any) => {
+        if (currentData) {
+          currentData.likes = (currentData.likes || 0) + 1;
+        }
+        return currentData;
+      });
+    }
   };
 
   const markAsRead = (id: string) => {
@@ -248,13 +212,7 @@ const App: React.FC = () => {
     }
   };
 
-  if (loading || !mergedContent) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-      </div>
-    );
-  }
+  if (loading || !mergedContent) return <div className="flex h-screen items-center justify-center bg-white"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div></div>;
 
   return (
     <Router>

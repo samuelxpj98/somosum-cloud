@@ -7,7 +7,7 @@ interface ExpressoDetailProps {
   content: AppContent;
   comments: Comment[];
   onAddComment: (comment: Comment) => void;
-  onLikeComment: (id: string) => void;
+  onLikeComment: (id: string, postId: string) => void;
   markAsRead: (id: string) => void;
   readPostIds: string[];
   onToggleSave: (id: string) => void;
@@ -18,7 +18,7 @@ const CommentItem: React.FC<{
   comment: Comment;
   allComments: Comment[];
   onReply: (parentId: string, text: string) => void;
-  onLike: (id: string) => void;
+  onLike: (id: string, postId: string) => void;
   isReply?: boolean;
   isDark?: boolean;
 }> = ({ comment, allComments, onReply, onLike, isReply, isDark }) => {
@@ -52,7 +52,7 @@ const CommentItem: React.FC<{
             {comment.text}
           </p>
           <div className="flex items-center gap-6 mt-3">
-            <button onClick={() => onLike(comment.id)} className={`flex items-center gap-1 active:scale-125 transition-all ${comment.isLiked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}>
+            <button onClick={() => comment.postId && onLike(comment.id, comment.postId)} className={`flex items-center gap-1 active:scale-125 transition-all ${comment.isLiked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}>
               <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: comment.isLiked ? "'FILL' 1" : "" }}>favorite</span>
               <span className="text-[10px] font-bold">{comment.likes}</span>
             </button>
@@ -114,11 +114,6 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
     }
   }, [item]);
 
-  const showToast = (message: string) => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: '' }), 3000);
-  };
-
   const handleSendComment = () => {
     if (!commentText.trim() || !id) return;
     setCommentStatus('sending');
@@ -133,19 +128,18 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
       postId: id
     };
     
-    // Simula delay de rede para feedback do Firebase
+    onAddComment(newComment);
     setTimeout(() => {
-      onAddComment(newComment);
       setCommentStatus('sent');
       setTimeout(() => {
         setShowCommentBox(false);
         setCommentText('');
         setCommentStatus('idle');
       }, 800);
-    }, 500);
+    }, 400);
   };
 
-  if (!item) return <div className="p-10 text-center">Não encontrado.</div>;
+  if (!item) return <div className="p-10 text-center font-bold">Post não encontrado.</div>;
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
@@ -179,7 +173,6 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
 
         <div className={`prose max-w-none mb-10 ${isDark ? 'prose-invert text-slate-300' : 'prose-slate text-slate-800'}`} dangerouslySetInnerHTML={{ __html: htmlContent }} />
 
-        {/* Ações do Post */}
         <div className="flex items-center justify-between gap-4 mb-12">
           <button onClick={() => { if(id) onToggleLike(id); }} className={`flex-1 py-4 rounded-[20px] shadow-sm flex flex-col items-center gap-1 active:scale-95 transition-all border ${isLiked ? 'bg-red-50/10 border-red-500/20 text-red-500' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "" }}>favorite</span>
@@ -189,7 +182,7 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
             <span className="material-symbols-outlined">chat_bubble</span>
             <span className="text-[10px] font-black uppercase">Opinar</span>
           </button>
-          <button onClick={() => { if(id) onToggleSave(id); showToast(isSaved ? 'Removido dos salvos' : 'Salvo na biblioteca! 📚'); }} className={`flex-1 py-4 rounded-[20px] shadow-sm flex flex-col items-center gap-1 active:scale-95 transition-all border ${isSaved ? 'bg-amber-50/10 border-amber-500/20 text-amber-600' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
+          <button onClick={() => { if(id) onToggleSave(id); }} className={`flex-1 py-4 rounded-[20px] shadow-sm flex flex-col items-center gap-1 active:scale-95 transition-all border ${isSaved ? 'bg-amber-50/10 border-amber-500/20 text-amber-600' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "" }}>bookmark</span>
             <span className="text-[10px] font-black uppercase">Salvar</span>
           </button>
@@ -217,10 +210,15 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
           </div>
         )}
 
-        {/* Seção de Discussão */}
         <section className="mb-12 space-y-6">
           <div className="flex items-center justify-between px-2">
-            <h3 className={`text-xl font-black font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>Discussão</h3>
+            <div className="flex items-center gap-2">
+              <h3 className={`text-xl font-black font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>Discussão</h3>
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                <div className="size-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Real-time</span>
+              </div>
+            </div>
             <span className="text-[10px] font-black px-2 py-1 bg-slate-100 rounded-md text-slate-500">{rootComments.length} conversas</span>
           </div>
           <div className="space-y-6">
