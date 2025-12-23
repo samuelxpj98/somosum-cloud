@@ -10,10 +10,33 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 
+// Fallback de segurança para evitar tela de loading infinita
+const FALLBACK_DATA: AppContent = {
+  branding: { appName: "SOMOSUM", region: "GOIÁS", motto: "Apologética Jovem" },
+  landing: { 
+    title: "Pronto para começar?", 
+    description: "Explore o guia definitivo para entender e compartilhar sua fé com confiança.",
+    heroImage: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200" 
+  },
+  expressos: [],
+  comments: [],
+  profile: {
+    name: "Explorador",
+    email: "",
+    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral",
+    church: "Não informado",
+    education: "Não informado",
+    isDarkMode: false,
+    savedPostIds: [],
+    likedPostIds: [],
+    stats: { daysInRow: 1, savedPosts: 0, writtenPosts: 0 }
+  }
+};
+
 const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
 
 const App: React.FC = () => {
-  const [data, setData] = useState<AppContent | null>(null);
+  const [data, setData] = useState<AppContent>(FALLBACK_DATA);
   const [loading, setLoading] = useState(true);
   const [globalComments, setGlobalComments] = useState<Comment[]>([]);
   const [userCreatedPosts, setUserCreatedPosts] = useState<Expresso[]>([]);
@@ -22,37 +45,24 @@ const App: React.FC = () => {
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
   const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
 
-  // Efeito para carregar dados iniciais e comentários do localStorage
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Carrega Perfil
+        // 1. Carrega Perfil
         const savedProfile = localStorage.getItem('user_profile');
         let initialProfile: UserProfile;
         if (savedProfile) {
           const parsed = JSON.parse(savedProfile);
           initialProfile = { ...parsed, likedPostIds: parsed.likedPostIds || [] };
         } else {
-          initialProfile = {
-            name: "Explorador",
-            email: "",
-            avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
-            church: "Não informada",
-            education: "Não informada",
-            isDarkMode: false,
-            savedPostIds: [],
-            likedPostIds: [],
-            stats: { daysInRow: 1, savedPosts: 0, writtenPosts: 0 }
-          };
+          initialProfile = FALLBACK_DATA.profile;
           localStorage.setItem('user_profile', JSON.stringify(initialProfile));
         }
         setUserProfile(initialProfile);
 
-        // Carrega Comentários Salvos Localmente
+        // 2. Carrega Comentários e Posts Locais
         const savedComments = localStorage.getItem('local_comments');
-        if (savedComments) {
-          setGlobalComments(JSON.parse(savedComments));
-        }
+        if (savedComments) setGlobalComments(JSON.parse(savedComments));
 
         const savedUserPosts = localStorage.getItem('user_created_posts');
         if (savedUserPosts) setUserCreatedPosts(JSON.parse(savedUserPosts));
@@ -60,16 +70,18 @@ const App: React.FC = () => {
         const savedReadPosts = localStorage.getItem('read_posts');
         if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
 
-        // Carrega Conteúdo Estático
+        // 3. Tenta carregar conteúdo atualizado do JSON
         try {
           const response = await fetch('conteudo.json');
           if (response.ok) {
             const json = await response.json();
             setData(json);
           }
-        } catch (e) { console.error("Erro no conteudo.json"); }
+        } catch (e) { 
+          console.warn("Usando dados de fallback: conteudo.json não acessível."); 
+        }
 
-        // Carrega Planilha
+        // 4. Carrega Planilha Google
         if (GOOGLE_SHEETS_TSV_URL) {
           try {
             const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
@@ -80,7 +92,6 @@ const App: React.FC = () => {
             lines.forEach((line, index) => {
               const parts = line.split('\t');
               if (!parts[0] || parts[0].trim() === "") return;
-              
               const type = parts[7]?.trim()?.toUpperCase() || "EXPRESSO";
               const isClassicVal = parts[11]?.trim()?.toUpperCase();
               
@@ -111,35 +122,34 @@ const App: React.FC = () => {
             });
             setSheetPosts(posts);
             setDynamicMissions(missions);
-          } catch (err) { console.error("Erro ao carregar planilha:", err); }
+          } catch (err) { console.error("Erro Planilha:", err); }
         }
-      } catch (error) { console.error("Erro crítico:", error); }
-      finally { setLoading(false); }
+      } catch (error) { 
+        console.error("Erro crítico na inicialização:", error); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     initializeApp();
   }, []);
 
-  // Persiste comentários localmente sempre que mudarem
   useEffect(() => {
-    if (globalComments.length > 0) {
-      localStorage.setItem('local_comments', JSON.stringify(globalComments));
-    }
+    localStorage.setItem('local_comments', JSON.stringify(globalComments));
   }, [globalComments]);
 
   const mergedContent = useMemo(() => {
-    if (!data || !userProfile) return null;
-    
+    const currentProfile = userProfile || FALLBACK_DATA.profile;
     const expressosList = [
       ...userCreatedPosts.filter(p => p.status === 'published' && p.categoryType !== 'APROFUNDAR'),
       ...sheetPosts.filter(p => p.categoryType === 'EXPRESSO'),
-      ...data.expressos
+      ...(data?.expressos || [])
     ];
 
     return {
       ...data,
       expressos: expressosList,
       sheetPosts: sheetPosts,
-      profile: userProfile
+      profile: currentProfile
     };
   }, [data, userCreatedPosts, userProfile, sheetPosts]);
 
@@ -180,7 +190,15 @@ const App: React.FC = () => {
     }
   };
 
-  if (loading || !mergedContent) return <div className="flex h-screen items-center justify-center bg-white"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div></div>;
+  // Removido o bloqueio rígido do mergedContent para evitar hang
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Iniciando SomosUm...</p>
+      </div>
+    </div>
+  );
 
   return (
     <Router>
