@@ -30,12 +30,13 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
     setIsTyping(true);
 
     try {
-      // Inicialização estrita conforme diretrizes do SDK para Senior Engineers
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Inicialização segura utilizando a variável de ambiente process.env.API_KEY injetada pelo Cloudflare
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      
       const systemInstruction = `Você é o Mentor SomosUm, um assistente especializado em apologética cristã, teologia e filosofia. 
       Você está ajudando um jovem a entender o artigo: "${articleTitle}". 
       Use uma linguagem clara, profunda, porém acessível. Sempre que possível, cite passagens bíblicas que sustentem os argumentos.
-      Contexto do artigo atual: ${articleContent.substring(0, 2000)}`;
+      Contexto do artigo atual: ${articleContent.substring(0, 3000)}`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -50,7 +51,7 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
       setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
     } catch (error) {
       console.error("Erro na IA:", error);
-      setMessages(prev => [...prev, { role: 'ai', text: "Houve um erro na conexão com meu banco de dados teológico. Verifique sua conexão." }]);
+      setMessages(prev => [...prev, { role: 'ai', text: "Houve um erro na conexão com meu banco de dados teológico. Verifique sua conexão e tente novamente." }]);
     } finally {
       setIsTyping(false);
     }
@@ -71,7 +72,7 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
               <h3 className={`text-lg font-black font-display leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Mentor SomosUm</h3>
               <div className="flex items-center gap-1.5">
                 <div className="size-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">IA Teológica Ativa</span>
+                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest text-center">IA Ativa</span>
               </div>
             </div>
           </div>
@@ -86,8 +87,8 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
             <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-60">
               <span className="material-symbols-outlined text-5xl text-blue-600">help_center</span>
               <div>
-                <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Alguma dúvida sobre o artigo?</p>
-                <p className="text-[11px] font-medium text-slate-400">Pergunte o que quiser sobre fé, razão ou teologia.</p>
+                <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Dúvidas sobre o artigo?</p>
+                <p className="text-[11px] font-medium text-slate-400">Pergunte o que quiser sobre fé e razão.</p>
               </div>
             </div>
           )}
@@ -138,7 +139,6 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
               <span className="material-symbols-outlined text-[20px]">send</span>
             </button>
           </div>
-          <p className="text-center text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-4">IA Mentor: Use para fins educacionais e apologéticos.</p>
         </div>
       </div>
     </div>
