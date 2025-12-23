@@ -1,8 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Expresso } from '../types';
-import { GoogleGenAI } from "@google/genai";
 
 interface EditorExpressoProps {
   onPublish: (expresso: Expresso) => void;
@@ -20,6 +18,17 @@ const CATEGORY_SUGGESTIONS = [
   { label: 'BATISTA', icon: 'water_drop', color: 'text-cyan-600' },
 ];
 
+// Biblioteca de imagens temáticas para uso estático (Local)
+const LOCAL_COVERS = [
+  "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format",
+  "https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=800&auto=format"
+];
+
 const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, isDarkMode }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -34,7 +43,7 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isClassic, setIsClassic] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isSelectingImage, setIsSelectingImage] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -61,39 +70,15 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
     }
   };
 
-  const generateAIImage = async () => {
-    if (!title) {
-      alert("Defina uma pergunta para a IA gerar a arte.");
-      return;
-    }
-
-    setIsGeneratingImage(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Minimalist 3D isometric illustration for Christian apologetics about: "${title}". Soft cinematic lighting, professional art, no text.`;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: [{ parts: [{ text: prompt }] }],
-        config: { imageConfig: { aspectRatio: "16:9" } }
-      });
-
-      const parts = response.candidates?.[0]?.content?.parts;
-      if (parts) {
-        for (const part of parts) {
-          if (part.inlineData) {
-            setImagePreview(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
-            return;
-          }
-        }
-      }
-      throw new Error("Falha ao receber imagem.");
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao gerar capa via IA.");
-    } finally {
-      setIsGeneratingImage(false);
-    }
+  // Função para gerar capa aleatória de forma 100% local e estática
+  const generateLocalImage = () => {
+    setIsSelectingImage(true);
+    // Simula um delay de "IA" para manter a experiência do usuário
+    setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * LOCAL_COVERS.length);
+      setImagePreview(LOCAL_COVERS[randomIndex]);
+      setIsSelectingImage(false);
+    }, 600);
   };
 
   const handleSave = (status: 'draft' | 'pending' | 'published') => {
@@ -149,9 +134,13 @@ const EditorExpresso: React.FC<EditorExpressoProps> = ({ onPublish, userPosts, i
         <section className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Capa do Post</h3>
-            <button onClick={generateAIImage} disabled={isGeneratingImage} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1.5 active:scale-95 transition-all">
-              <span className={`material-symbols-outlined text-sm ${isGeneratingImage ? 'animate-spin' : ''}`}>auto_awesome</span>
-              {isGeneratingImage ? 'Gerando...' : 'IA de Capa'}
+            <button 
+              onClick={generateLocalImage} 
+              disabled={isSelectingImage} 
+              className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1.5 active:scale-95 transition-all"
+            >
+              <span className={`material-symbols-outlined text-sm ${isSelectingImage ? 'animate-spin' : ''}`}>refresh</span>
+              {isSelectingImage ? 'Sorteando...' : 'Sortear Capa Local'}
             </button>
           </div>
           <div onClick={() => fileInputRef.current?.click()} className={`w-full aspect-[16/9] border-2 border-dashed rounded-[32px] flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all relative ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-blue-100 bg-slate-50'}`}>
