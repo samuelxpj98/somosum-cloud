@@ -1,4 +1,3 @@
-
 export interface Comment {
   id: string;
   userName: string;
@@ -19,10 +18,18 @@ export interface ResourceLink {
   url: string;
 }
 
+export interface CommunityPost {
+  title: string;
+  content: string;
+  imageUrl?: string;
+  author?: string;
+}
+
 export interface Expresso {
   id: string;
   category: string;
   categoryFull?: string;
+  categoryType?: string;
   title: string;
   subtitle: string;
   imageUrl: string;
@@ -51,6 +58,7 @@ export interface UserProfile {
   course?: string;
   isDarkMode: boolean;
   savedPostIds: string[];
+  likedPostIds: string[];
   stats: {
     daysInRow: number;
     savedPosts: number;

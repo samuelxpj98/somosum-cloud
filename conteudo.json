@@ -1,4 +1,3 @@
-
 {
   "branding": {
     "appName": "SOMOSUM",
@@ -31,19 +30,21 @@
     },
     {
       "id": "7",
-      "category": "CIÊNCIA",
-      "categoryFull": "CIÊNCIA & CRIAÇÃO",
-      "title": "O Big Bang prova Deus?",
-      "subtitle": "Se o universo teve um início, ele precisa de uma causa.",
-      "imageUrl": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=800",
-      "readingTime": "1.5 MIN",
+      "category": "HISTÓRIA",
+      "categoryFull": "HISTÓRIA & EVIDÊNCIAS",
+      "title": "Jesus existiu de verdade?",
+      "subtitle": "O que os historiadores seculares dizem sobre Jesus?",
+      "imageUrl": "https://images.unsplash.com/photo-1590076175573-ac6788879555?auto=format&fit=crop&q=80&w=800",
+      "readingTime": "1.8 MIN",
+      "bibleReference": "Gálatas 4:4",
+      "tags": ["História", "Jesus"],
       "isClassic": false,
       "analogy": {
-        "icon": "auto_awesome",
-        "title": "A Primeira Causa",
-        "text": "Nada surge do nada. Se o universo surgiu, algo fora dele (atemporal e imaterial) deve tê-lo causado."
+        "icon": "account_balance",
+        "title": "O rastro na areia.",
+        "text": "Você não vê o vento, mas vê o rastro que ele deixa. Historiadores como Flávio Josefo e Tácito não eram cristãos, mas registraram que Jesus viveu e foi crucificado."
       },
-      "content": "A teoria do Big Bang indica que o tempo, o espaço e a matéria tiveram um início absoluto. Pela lógica, a causa desse início deve estar fora dessas três dimensões."
+      "content": "A existência de Jesus é um fato aceito por quase 100% dos historiadores sérios. Além dos Evangelhos, temos fontes romanas (Tácito, Plínio o Jovem) e judaicas (Flávio Josefo) que mencionam o 'Cristo' e seu impacto no primeiro século."
     },
     {
       "id": "8",

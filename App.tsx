@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppContent, Comment, Expresso, UserProfile } from './types';
@@ -9,10 +8,9 @@ import ExpressoDetail from './pages/ExpressoDetail';
 import Aprofundar from './pages/Aprofundar';
 import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
-import Editor from './pages/Editor';
-import EditorExpresso from './pages/EditorExpresso';
-import EditorAprofundamento from './pages/EditorAprofundamento';
 import BottomNav from './components/BottomNav';
+
+const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
 
 const App: React.FC = () => {
   const [data, setData] = useState<AppContent | null>(null);
@@ -21,7 +19,8 @@ const App: React.FC = () => {
   const [userCreatedPosts, setUserCreatedPosts] = useState<Expresso[]>([]);
   const [readPostIds, setReadPostIds] = useState<string[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'pending' } | null>(null);
+  const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
+  const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -29,7 +28,11 @@ const App: React.FC = () => {
         const savedProfile = localStorage.getItem('user_profile');
         let initialProfile: UserProfile;
         if (savedProfile) {
-          initialProfile = JSON.parse(savedProfile);
+          const parsed = JSON.parse(savedProfile);
+          initialProfile = {
+            ...parsed,
+            likedPostIds: parsed.likedPostIds || []
+          };
         } else {
           initialProfile = {
             name: "Explorador",
@@ -39,6 +42,7 @@ const App: React.FC = () => {
             education: "Não informada",
             isDarkMode: false,
             savedPostIds: [],
+            likedPostIds: [],
             stats: { daysInRow: 1, savedPosts: 0, writtenPosts: 0 }
           };
           localStorage.setItem('user_profile', JSON.stringify(initialProfile));
@@ -46,14 +50,9 @@ const App: React.FC = () => {
         setUserProfile(initialProfile);
 
         const savedUserPosts = localStorage.getItem('user_created_posts');
-        if (savedUserPosts) {
-          setUserCreatedPosts(JSON.parse(savedUserPosts));
-        }
-
+        if (savedUserPosts) setUserCreatedPosts(JSON.parse(savedUserPosts));
         const savedReadPosts = localStorage.getItem('read_posts');
-        if (savedReadPosts) {
-          setReadPostIds(JSON.parse(savedReadPosts));
-        }
+        if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
 
         try {
           const response = await fetch('conteudo.json');
@@ -61,18 +60,57 @@ const App: React.FC = () => {
             const json = await response.json();
             setData(json);
             setGlobalComments(json.comments || []);
-          } else {
-            throw new Error("Falha no fetch");
           }
-        } catch (e) {
-          setData({
-            branding: { appName: "SOMOSUM", region: "GOIÁS", motto: "Apologética" },
-            landing: { title: "Bem-vindo", description: "Inicie sua jornada.", heroImage: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac" },
-            expressos: [],
-            comments: [],
-            profile: initialProfile
-          });
+        } catch (e) { console.error("Erro no conteudo.json"); }
+
+        if (GOOGLE_SHEETS_TSV_URL) {
+          try {
+            const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
+            const tsvText = await sheetRes.text();
+            const lines = tsvText.split('\n').slice(1);
+            
+            const posts: Expresso[] = [];
+            const missions: string[] = [];
+
+            lines.forEach((line, index) => {
+              const parts = line.split('\t');
+              if (!parts[0] || parts[0].trim() === "") return;
+
+              const type = parts[7]?.trim()?.toUpperCase() || "EXPRESSO";
+
+              if (type === "MISSAO") {
+                missions.push(parts[1]?.trim() || parts[0]?.trim());
+              } else {
+                posts.push({
+                  id: `sheet-${index}`,
+                  title: parts[0]?.trim(),
+                  content: parts[1]?.trim(),
+                  imageUrl: parts[2]?.trim() || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
+                  category: parts[3]?.trim() || "GERAL",
+                  categoryFull: parts[3]?.trim(),
+                  subtitle: parts[4]?.trim() || "",
+                  readingTime: parts[5]?.trim() || "2 MIN",
+                  bibleReference: parts[6]?.trim() || "",
+                  categoryType: type,
+                  tags: [parts[3]?.toLowerCase() || 'geral'],
+                  status: 'published',
+                  isClassic: false,
+                  analogy: parts[8] ? {
+                    icon: parts[8]?.trim() || "bolt",
+                    title: parts[9]?.trim() || "Analogia",
+                    text: parts[10]?.trim() || ""
+                  } : undefined
+                });
+              }
+            });
+
+            setSheetPosts(posts);
+            setDynamicMissions(missions);
+          } catch (err) {
+            console.error("Erro ao carregar planilha:", err);
+          }
         }
+
       } catch (error) {
         console.error("Erro crítico na inicialização:", error);
       } finally {
@@ -83,29 +121,23 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => setNotification(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
-
-  const showNotify = (message: string, type: 'success' | 'info' | 'pending' = 'success') => {
-    setNotification({ message, type });
-  };
-
   const mergedContent = useMemo(() => {
     if (!data || !userProfile) return null;
-    const publishedUserPosts = userCreatedPosts.filter(p => p.status === 'published');
-    const existingIds = new Set(data.expressos.map(e => e.id));
-    const uniqueUserPosts = publishedUserPosts.filter(p => !existingIds.has(p.id));
+    
+    const sheetExpressos = sheetPosts.filter(p => p.categoryType === "EXPRESSO");
+    const sheetAprofundamentos = sheetPosts.filter(p => p.categoryType === "APROFUNDAR");
 
     return {
       ...data,
-      expressos: [...uniqueUserPosts, ...data.expressos],
+      expressos: [
+        ...userCreatedPosts.filter(p => p.status === 'published'), 
+        ...sheetExpressos, 
+        ...sheetAprofundamentos, 
+        ...data.expressos
+      ],
       profile: userProfile
     };
-  }, [data, userCreatedPosts, userProfile]);
+  }, [data, userCreatedPosts, userProfile, sheetPosts]);
 
   const updateProfile = (updated: UserProfile) => {
     setUserProfile(updated);
@@ -118,13 +150,28 @@ const App: React.FC = () => {
     const newSavedIds = isSaved 
       ? userProfile.savedPostIds.filter(pid => pid !== id)
       : [...userProfile.savedPostIds, id];
-    
-    const updatedProfile = {
-      ...userProfile,
-      savedPostIds: newSavedIds,
-      stats: { ...userProfile.stats, savedPosts: newSavedIds.length }
-    };
-    updateProfile(updatedProfile);
+    updateProfile({ ...userProfile, savedPostIds: newSavedIds, stats: { ...userProfile.stats, savedPosts: newSavedIds.length } });
+  };
+
+  const toggleLikePost = (id: string) => {
+    if (!userProfile) return;
+    const isLiked = userProfile.likedPostIds.includes(id);
+    const newLikedIds = isLiked
+      ? userProfile.likedPostIds.filter(pid => pid !== id)
+      : [...userProfile.likedPostIds, id];
+    updateProfile({ ...userProfile, likedPostIds: newLikedIds });
+  };
+
+  const handleAddComment = (newComment: Comment) => {
+    setGlobalComments(prev => [newComment, ...prev]);
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    setGlobalComments(prev => prev.map(c => 
+      c.id === commentId 
+        ? { ...c, likes: c.isLiked ? c.likes - 1 : c.likes + 1, isLiked: !c.isLiked } 
+        : c
+    ));
   };
 
   const markAsRead = (id: string) => {
@@ -135,52 +182,9 @@ const App: React.FC = () => {
     }
   };
 
-  const upsertPost = (post: Expresso) => {
-    const updatedPosts = [...userCreatedPosts];
-    const index = updatedPosts.findIndex(p => p.id === post.id);
-    
-    if (index > -1) {
-      updatedPosts[index] = post;
-    } else {
-      updatedPosts.unshift(post);
-    }
-    
-    setUserCreatedPosts(updatedPosts);
-    localStorage.setItem('user_created_posts', JSON.stringify(updatedPosts));
-
-    // Notificação baseada no status
-    if (post.status === 'published') {
-      showNotify("Conteúdo publicado com sucesso! 🚀", "success");
-    } else if (post.status === 'pending') {
-      showNotify("Enviado para moderação/pendência. ⏳", "pending");
-    } else {
-      showNotify("Rascunho salvo com sucesso. 📁", "info");
-    }
-  };
-
-  const updatePostStatus = (id: string, newStatus: 'draft' | 'pending' | 'published') => {
-    const updated = userCreatedPosts.map(p => p.id === id ? { ...p, status: newStatus } : p);
-    setUserCreatedPosts(updated);
-    localStorage.setItem('user_created_posts', JSON.stringify(updated));
-    
-    const messages = {
-      published: "Conteúdo publicado! 🚀",
-      pending: "Enviado para pendências. ⏳",
-      draft: "Movido para rascunhos. 📁"
-    };
-    showNotify(messages[newStatus], newStatus === 'published' ? 'success' : 'info');
-  };
-
-  const deleteUserPost = (id: string) => {
-    const updated = userCreatedPosts.filter(p => p.id !== id);
-    setUserCreatedPosts(updated);
-    localStorage.setItem('user_created_posts', JSON.stringify(updated));
-    showNotify("Postagem removida.", "info");
-  };
-
   if (loading || !mergedContent) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-white">
+      <div className="flex h-screen items-center justify-center bg-white">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
       </div>
     );
@@ -189,38 +193,14 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className={`mx-auto max-w-md min-h-screen shadow-xl relative overflow-x-hidden transition-colors duration-300 ${mergedContent.profile.isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
-        
-        {/* Notificação Flutuante Animada */}
-        {notification && (
-          <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-xs animate-in slide-in-from-top-8 duration-500">
-            <div className={`px-6 py-4 rounded-[28px] shadow-2xl flex items-center gap-4 border ${
-              notification.type === 'success' 
-                ? 'bg-emerald-500 border-emerald-400 text-white' 
-                : notification.type === 'pending'
-                ? 'bg-blue-600 border-blue-400 text-white'
-                : 'bg-slate-800 border-slate-700 text-white'
-            }`}>
-              <span className="material-symbols-outlined text-[20px]">
-                {notification.type === 'success' ? 'check_circle' : notification.type === 'pending' ? 'hourglass_top' : 'info'}
-              </span>
-              <p className="text-[11px] font-black uppercase tracking-widest leading-tight">{notification.message}</p>
-            </div>
-          </div>
-        )}
-
         <Routes>
           <Route path="/" element={<Landing content={mergedContent} />} />
-          <Route path="/home" element={<Home content={mergedContent} />} />
-          <Route path="/expresso" element={<ExpressoPage content={mergedContent} comments={globalComments} onAddComment={()=>{}} onLikeComment={()=>{}} readPostIds={readPostIds} />} />
-          <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} comments={globalComments} onAddComment={()=>{}} onLikeComment={()=>{}} markAsRead={markAsRead} readPostIds={readPostIds} />} />
+          <Route path="/home" element={<Home content={mergedContent} missions={dynamicMissions} />} />
+          <Route path="/expresso" element={<ExpressoPage content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} readPostIds={readPostIds} />} />
+          <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} markAsRead={markAsRead} readPostIds={readPostIds} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
           <Route path="/aprofundar" element={<Aprofundar content={mergedContent} userPosts={userCreatedPosts} readPostIds={readPostIds} />} />
-          <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} comments={globalComments} onAddComment={()=>{}} onLikeComment={()=>{}} markAsRead={markAsRead} readPostIds={readPostIds} onToggleSave={toggleSavePost} />} />
+          <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} markAsRead={markAsRead} readPostIds={readPostIds} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
           <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={userCreatedPosts} />} />
-          <Route path="/editor" element={<Editor userPosts={userCreatedPosts} onUpdateStatus={updatePostStatus} onDelete={deleteUserPost} isDarkMode={mergedContent.profile.isDarkMode} />} />
-          <Route path="/editor/expresso" element={<EditorExpresso onPublish={upsertPost} userPosts={userCreatedPosts} isDarkMode={mergedContent.profile.isDarkMode} />} />
-          <Route path="/editor/expresso/:id" element={<EditorExpresso onPublish={upsertPost} userPosts={userCreatedPosts} isDarkMode={mergedContent.profile.isDarkMode} />} />
-          <Route path="/editor/aprofundamento" element={<EditorAprofundamento onPublish={upsertPost} userPosts={userCreatedPosts} isDarkMode={mergedContent.profile.isDarkMode} />} />
-          <Route path="/editor/aprofundamento/:id" element={<EditorAprofundamento onPublish={upsertPost} userPosts={userCreatedPosts} isDarkMode={mergedContent.profile.isDarkMode} />} />
         </Routes>
         <BottomNav isDarkMode={mergedContent.profile.isDarkMode} />
       </div>

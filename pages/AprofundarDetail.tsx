@@ -12,6 +12,8 @@ interface AprofundarDetailProps {
   markAsRead: (id: string) => void;
   readPostIds: string[];
   onToggleSave: (id: string) => void;
+  // Added onToggleLike prop definition to match App.tsx usage
+  onToggleLike: (id: string) => void;
 }
 
 const CommentItem: React.FC<{
@@ -126,12 +128,23 @@ const CommentItem: React.FC<{
   );
 };
 
-const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, onAddComment, onLikeComment, markAsRead, readPostIds, onToggleSave }) => {
+const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ 
+  content, 
+  comments, 
+  onAddComment, 
+  onLikeComment, 
+  markAsRead, 
+  readPostIds, 
+  onToggleSave,
+  // Destructured the newly added onToggleLike prop
+  onToggleLike 
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const commentSectionRef = useRef<HTMLElement>(null);
   
-  const [isLiked, setIsLiked] = useState(false);
+  // Replaced local isLiked state with derived value from profile state
+  const isLiked = id ? content.profile.likedPostIds.includes(id) : false;
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showCommentBox, setShowCommentBox] = useState(false);
@@ -308,7 +321,8 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
         )}
 
         <div className="flex items-center justify-between gap-4 mb-12">
-          <button onClick={() => setIsLiked(!isLiked)} className={`flex-1 py-4 rounded-[20px] shadow-sm flex flex-col items-center gap-1 active:scale-95 transition-all border ${isLiked ? 'bg-red-50 border-red-100 text-red-500' : 'bg-white border-slate-100 text-slate-400'}`}>
+          {/* Updated like button to use the onToggleLike prop from App.tsx */}
+          <button onClick={() => { if(id) onToggleLike(id); }} className={`flex-1 py-4 rounded-[20px] shadow-sm flex flex-col items-center gap-1 active:scale-95 transition-all border ${isLiked ? 'bg-red-50 border-red-100 text-red-500' : 'bg-white border-slate-100 text-slate-400'}`}>
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "" }}>favorite</span>
             <span className={`text-[10px] font-bold uppercase ${isLiked ? 'text-red-500' : 'text-slate-500'}`}>Curtir</span>
           </button>

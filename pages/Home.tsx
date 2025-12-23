@@ -3,41 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import Header from '../components/Header';
 
-interface HomeProps {
-  content: AppContent;
-}
-
-const MISSIONS = [
+// Curadoria de Missões (Fallback de Segurança e Base Local)
+const FALLBACK_MISSIONS = [
   "Memorize 1 Pedro 3:15 hoje e pense em como aplicá-lo em uma conversa real.",
-  "Pesquise sobre o 'Argumento do Ajuste Fino' (Fine-Tuning) do universo.",
-  "Pergunte a um amigo: 'Qual sua maior dúvida sobre a existência de Deus?' e apenas ouça.",
-  "Escreva 3 motivos históricos pelos quais confiamos na veracidade dos Evangelhos.",
-  "Assista a um vídeo curto sobre a Ressurreição de Jesus sob a ótica jurídica.",
-  "Leia Romanos 1:20 e tire uma foto de algo na criação que te lembre a glória de Deus.",
-  "Desafio: Explique a um familiar o que é 'Apologética' em menos de 1 minuto.",
-  "Pesquise sobre quem foi C.S. Lewis e como ele passou do ateísmo ao cristianismo.",
-  "Analise o argumento 'Moral' para a existência de Deus.",
-  "Hoje, ore por uma pessoa que você sabe que tem dificuldades intelectuais com a fé.",
-  "Leia sobre a descoberta dos Manuscritos do Mar Morto.",
-  "Tente explicar a Trindade usando uma analogia (e descubra por que todas falham!).",
-  "Reflita: Como o mal no mundo pode ser um argumento para a existência de um padrão moral (Deus)?",
-  "Descubra o que significa a 'Suficiência das Escrituras'.",
+  "Desafio: Explique a um familiar o que é 'Evangelho' em menos de 1 minuto.",
   "Compartilhe um dos 'Expressos' do app com alguém hoje no WhatsApp.",
-  "Leia o Salmo 19:1 e medite na relação entre Astronomia e Fé.",
-  "Pesquise o termo 'Teodiceia' e entenda o que ele significa no estudo da dor.",
-  "Tire 5 minutos para agradecer por uma dúvida que você já conseguiu sanar.",
-  "Leia sobre a vida de William Lane Craig ou Alister McGrath.",
-  "Faça um post no seu Instagram sobre a harmonia entre Razão e Fé."
+  "Leia Romanos 1:20 e tire uma foto de algo na criação que te lembre a glória de Deus.",
+  "Pergunte a um amigo: 'Qual sua maior dúvida sobre a existência de Deus?' e apenas ouça.",
+  "Pesquise sobre o 'Argumento do Ajuste Fino' (Fine-Tuning) do universo.",
+  "Assista hoje pelo menos um vídeo curto do 'Bibleproject português' no Youtube!",
+  "Descubra quem foi C.S. Lewis e como ele passou do ateísmo ao cristianismo.",
+  "Analise o argumento 'Moral' para a existência de Deus: o bem e o mal são relativos?",
+  "Tire 5 minutos para orar especificamente por um amigo que tem dúvidas sobre a fé."
 ];
 
-const Home: React.FC<HomeProps> = ({ content }) => {
+interface HomeProps {
+  content: AppContent;
+  missions: string[];
+}
+
+const Home: React.FC<HomeProps> = ({ content, missions }) => {
   const navigate = useNavigate();
-  const [mission, setMission] = useState<string | null>(null);
+  const [currentMission, setCurrentMission] = useState<string | null>(null);
   const isDark = content.profile.isDarkMode;
 
   const handleGetMission = () => {
-    const randomIndex = Math.floor(Math.random() * MISSIONS.length);
-    setMission(MISSIONS[randomIndex]);
+    const source = missions.length > 0 ? missions : FALLBACK_MISSIONS;
+    const randomIndex = Math.floor(Math.random() * source.length);
+    setCurrentMission(source[randomIndex]);
   };
 
   return (
@@ -45,34 +38,7 @@ const Home: React.FC<HomeProps> = ({ content }) => {
       <Header content={content} />
       
       <main className="px-6 space-y-8 mt-6">
-        <section className="space-y-4 animate-in fade-in duration-500">
-           <div className={`p-6 rounded-[32px] border shadow-sm transition-all ${isDark ? 'bg-blue-600/10 border-blue-50/20' : 'bg-white border-slate-100'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                 <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                    <span className="material-symbols-outlined text-[20px]">target</span>
-                 </div>
-                 <div>
-                    <h3 className="text-sm font-black uppercase tracking-widest leading-none">Missão de Hoje</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Desafio Prático Local</p>
-                 </div>
-              </div>
-              
-              {mission ? (
-                <div className="animate-in zoom-in-95 duration-300">
-                  <p className={`text-sm font-medium leading-relaxed mb-4 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{mission}</p>
-                  <button onClick={() => setMission(null)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Fechar Missão</button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleGetMission}
-                  className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 active:scale-95 transition-transform"
-                >
-                  Gerar Missão Aleatória
-                </button>
-              )}
-           </div>
-        </section>
-
+        {/* Expressos */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className={`text-xs font-[900] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Destaque do Dia</h3>
@@ -109,6 +75,7 @@ const Home: React.FC<HomeProps> = ({ content }) => {
           </div>
         </section>
 
+        {/* Aprofundamento */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className={`text-xs font-[900] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Estudo Profundo</h3>
@@ -143,6 +110,48 @@ const Home: React.FC<HomeProps> = ({ content }) => {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Missão de Hoje (Encerrando o feed) */}
+        <section className="space-y-4 pt-4 animate-in fade-in duration-700">
+           <div className={`p-6 rounded-[40px] border shadow-2xl transition-all ${isDark ? 'bg-blue-600/10 border-blue-500/20' : 'bg-white border-slate-100'}`}>
+              <div className="flex items-center gap-4 mb-6">
+                 <div className="size-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30">
+                    <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>target</span>
+                 </div>
+                 <div>
+                    <h3 className="text-base font-black uppercase tracking-tight leading-none">Desafio Prático</h3>
+                    <p className="text-[10px] text-slate-400 font-black uppercase mt-1 tracking-widest">
+                      Missão Diária
+                    </p>
+                 </div>
+              </div>
+              
+              {currentMission ? (
+                <div className="animate-in zoom-in-95 duration-300">
+                  <div className={`p-5 rounded-2xl mb-6 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                    <p className={`text-[15px] font-bold leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {currentMission}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => setCurrentMission(null)} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Fechar</button>
+                    <button onClick={handleGetMission} className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">refresh</span>
+                      Outra Missão
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleGetMission}
+                  className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 active:scale-95 transition-transform flex items-center justify-center gap-3"
+                >
+                  <span className="material-symbols-outlined text-[20px]">auto_fix</span>
+                  Revelar Minha Missão
+                </button>
+              )}
+           </div>
         </section>
       </main>
     </div>
