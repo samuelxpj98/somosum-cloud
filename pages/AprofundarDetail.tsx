@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, Comment } from '../types';
@@ -62,14 +63,10 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
 
   const rootComments = comments.filter(c => c.postId === id && !c.parentId);
 
-  // Processamento de parágrafos para lidar com o Alt+Enter da planilha
-  const formattedContent = useMemo(() => {
-    if (!displayItem) return [];
-    return displayItem.content
-      .replace(/\\n/g, '\n') // Trata quebra de linha literal
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+  // Sanitização de texto para garantir que as quebras de linha da planilha (Alt+Enter) sejam respeitadas
+  const processedBody = useMemo(() => {
+    if (!displayItem) return '';
+    return displayItem.content.replace(/\\n/g, '\n').trim();
   }, [displayItem]);
 
   const handleSendComment = () => {
@@ -103,6 +100,7 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
       </header>
 
       <main className="px-6 py-4">
+        {/* Hierarquia Visual Padronizada */}
         <div className="mb-8 text-center flex flex-col items-center gap-3">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {displayItem.categoryFull || displayItem.category}
@@ -122,29 +120,26 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
         </div>
 
         {displayItem.analogy && (
-          <div className={`mb-10 p-8 rounded-[32px] border shadow-sm ${isDark ? 'bg-slate-800 border-slate-700 shadow-slate-950/20' : 'bg-slate-900 text-white shadow-xl shadow-slate-200/50'}`}>
+          <div className={`mb-10 p-8 rounded-[32px] border shadow-sm ${isDark ? 'bg-slate-800 border-slate-700 shadow-slate-950/20' : 'bg-slate-900 text-white shadow-xl'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
                 <span className="material-symbols-outlined text-[20px]">{displayItem.analogy.icon}</span>
               </div>
-              <h4 className={`text-sm font-black uppercase tracking-widest text-white`}>
+              <h4 className="text-sm font-black uppercase tracking-widest text-white">
                 {displayItem.analogy.title}
               </h4>
             </div>
-            <p className={`text-base leading-relaxed font-medium italic ${isDark ? 'text-slate-400' : 'text-slate-100'}`}>
-              "{displayItem.analogy.text}"
-            </p>
+            <p className="text-base italic font-medium leading-relaxed text-slate-100">"{displayItem.analogy.text}"</p>
           </div>
         )}
 
-        <div className={`space-y-6 leading-[1.8] text-[17px] mb-12 ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
-           {formattedContent.map((paragraph, index) => (
-             <p key={index}>{paragraph}</p>
-           ))}
+        {/* Texto com preservação de quebras de linha */}
+        <div className={`whitespace-pre-line mb-12 text-[17px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
+          {processedBody}
         </div>
 
         {displayItem.bibleReference && (
-          <div className={`mb-12 p-8 rounded-[32px] border-2 border-dashed flex flex-col items-center text-center gap-4 animate-in fade-in duration-1000 ${isDark ? 'bg-blue-900/10 border-blue-800/40' : 'bg-blue-50/80 border-blue-200/50'}`}>
+          <div className={`mb-12 p-8 rounded-[32px] border-2 border-dashed flex flex-col items-center text-center gap-4 ${isDark ? 'bg-blue-900/10 border-blue-800/40' : 'bg-blue-50/80 border-blue-200/50'}`}>
             <span className="material-symbols-outlined text-blue-600 text-4xl">auto_stories</span>
             <div>
               <p className="text-[11px] font-[900] uppercase tracking-[0.25em] text-blue-600 mb-2">Pilar da Fé</p>
@@ -155,6 +150,7 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
           </div>
         )}
 
+        {/* Interações */}
         <div className="flex items-center justify-between gap-4 mb-12">
           <button onClick={() => id && onToggleLike(id)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 active:scale-95 transition-all ${isLiked ? 'text-red-500 border-red-100 bg-red-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "" }}>favorite</span> <span className="text-[10px] font-black uppercase">Curtir</span>
@@ -184,7 +180,7 @@ const AprofundarDetail: React.FC<AprofundarDetailProps> = ({ content, comments, 
         </section>
 
         <div onClick={() => { if(id) markAsRead(id); navigate(`/aprofundar`); }} className="w-full bg-[#135bec] p-8 rounded-[32px] flex items-center justify-between text-white shadow-xl active:scale-[0.98] transition-transform cursor-pointer">
-          <div className="text-left"><span className="text-[11px] font-black opacity-60 block mb-2 uppercase tracking-widest">ESTUDO CONCLUÍDO</span><p className="text-2xl font-[900] font-display leading-tight">Finalizar e<br/>voltar à lista</p></div>
+          <div className="text-left"><span className="text-[11px] font-black opacity-60 block mb-2 uppercase tracking-widest">ESTUDO CONCLUÍDO</span><p className="text-2xl font-[900] font-display leading-tight">Finalizar e Voltar</p></div>
           <span className="material-symbols-outlined text-[32px]">check_circle</span>
         </div>
       </main>
