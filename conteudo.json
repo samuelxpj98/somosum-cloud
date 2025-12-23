@@ -1,0 +1,80 @@
+
+{
+  "branding": {
+    "appName": "SOMOSUM",
+    "region": "GOIÁS",
+    "motto": "Apologética Jovem"
+  },
+  "landing": {
+    "title": "Pronto para começar?",
+    "description": "Explore o guia definitivo para entender e compartilhar sua fé com confiança.",
+    "heroImage": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200"
+  },
+  "expressos": [
+    {
+      "id": "6",
+      "category": "HISTÓRIA",
+      "categoryFull": "HISTÓRIA & MANUSCRITOS",
+      "title": "A Bíblia é realmente confiável?",
+      "subtitle": "Como sabemos que o texto não foi alterado com o tempo?",
+      "imageUrl": "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800",
+      "readingTime": "1.2 MIN",
+      "bibleReference": "2 Timóteo 3:16",
+      "tags": ["História", "Bíblia"],
+      "isClassic": false,
+      "analogy": {
+        "icon": "history_edu",
+        "title": "O teste da cópia.",
+        "text": "Se você tem 5000 cópias de uma carta e todas dizem o mesmo, você sabe o que o original dizia. A Bíblia tem mais manuscritos que qualquer outro livro da antiguidade."
+      },
+      "content": "A Bíblia possui mais de 5.800 manuscritos gregos apenas do Novo Testamento. Quando comparamos essas cópias, a consistência é de 99,5%, superando obras clássicas como a Ilíada de Homero ou os escritos de Platão."
+    },
+    {
+      "id": "7",
+      "category": "CIÊNCIA",
+      "categoryFull": "CIÊNCIA & CRIAÇÃO",
+      "title": "O Big Bang prova Deus?",
+      "subtitle": "Se o universo teve um início, ele precisa de uma causa.",
+      "imageUrl": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=800",
+      "readingTime": "1.5 MIN",
+      "isClassic": false,
+      "analogy": {
+        "icon": "auto_awesome",
+        "title": "A Primeira Causa",
+        "text": "Nada surge do nada. Se o universo surgiu, algo fora dele (atemporal e imaterial) deve tê-lo causado."
+      },
+      "content": "A teoria do Big Bang indica que o tempo, o espaço e a matéria tiveram um início absoluto. Pela lógica, a causa desse início deve estar fora dessas três dimensões."
+    },
+    {
+      "id": "8",
+      "category": "IDENTIDADE",
+      "categoryFull": "MORALIDADE OBJETIVA",
+      "title": "O bem e o mal são relativos?",
+      "subtitle": "Por que todos sentimos que certas coisas são erradas?",
+      "imageUrl": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800",
+      "readingTime": "2 MIN",
+      "isClassic": true,
+      "analogy": {
+        "icon": "balance",
+        "title": "O Padrão Áureo",
+        "text": "Você não sabe que uma linha é torta se não tiver ideia do que é uma linha reta. Deus é a linha reta moral."
+      },
+      "content": "Se não existe um padrão moral superior (Deus), então o Holocausto seria apenas uma 'opinião' cultural, o que nossa consciência rejeita imediatamente."
+    }
+  ],
+  "comments": [],
+  "profile": {
+    "name": "Explorador",
+    "email": "",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral",
+    "church": "Não informado",
+    "education": "Não informado",
+    "course": "",
+    "isDarkMode": false,
+    "stats": {
+      "daysInRow": 1,
+      "savedPosts": 0,
+      "writtenPosts": 0
+    }
+  }
+}
