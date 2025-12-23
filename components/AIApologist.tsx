@@ -30,7 +30,8 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // Inicialização estrita conforme diretrizes do SDK para Senior Engineers
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const systemInstruction = `Você é o Mentor SomosUm, um assistente especializado em apologética cristã, teologia e filosofia. 
       Você está ajudando um jovem a entender o artigo: "${articleTitle}". 
       Use uma linguagem clara, profunda, porém acessível. Sempre que possível, cite passagens bíblicas que sustentem os argumentos.
