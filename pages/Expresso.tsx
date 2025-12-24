@@ -107,7 +107,15 @@ const ExpressoPage: React.FC<ExpressoProps> = ({ content, comments, onAddComment
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-black font-display">Em Alta</h3>
                 {sortedInHigh.length > 4 && (
-                   <button onClick={() => setFilter('high')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full">Ver todos</button>
+                   <button 
+                    onClick={() => {
+                      setFilter('high');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} 
+                    className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full"
+                  >
+                    Ver todos
+                  </button>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -121,7 +129,15 @@ const ExpressoPage: React.FC<ExpressoProps> = ({ content, comments, onAddComment
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-black font-display">Perguntas Clássicas</h3>
                 {sortedClassics.length > 4 && (
-                   <button onClick={() => setFilter('classic')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full">Ver todos</button>
+                   <button 
+                    onClick={() => {
+                      setFilter('classic');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} 
+                    className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full"
+                  >
+                    Ver todos
+                  </button>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">

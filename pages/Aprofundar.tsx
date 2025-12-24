@@ -129,7 +129,7 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
         </button>
         <div className="flex flex-col items-center">
           <h1 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            {showAll ? 'Todos os Estudos' : 'Aprofundar'}
+            {showAll ? 'Catálogo Completo' : 'Aprofundar'}
           </h1>
         </div>
         <div className="w-10"></div>
@@ -144,20 +144,23 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Em Destaque</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Sugestões de Leitura</p>
             {allItems.slice(0, 4).map(item => (
               <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />
             ))}
             
             {allItems.length > 4 && (
               <button 
-                onClick={() => setShowAll(true)}
+                onClick={() => {
+                  setShowAll(true);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className={`w-full py-6 rounded-[32px] border-2 border-dashed font-black text-[11px] uppercase tracking-widest shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 ${
                   isDark ? 'bg-slate-800/40 border-slate-700 text-blue-400' : 'bg-white border-blue-100 text-blue-600'
                 }`}
               >
                 Ver tudo em Grade (2x2)
-                <span className="material-symbols-outlined text-sm">expand_more</span>
+                <span className="material-symbols-outlined text-sm">grid_view</span>
               </button>
             )}
           </div>
