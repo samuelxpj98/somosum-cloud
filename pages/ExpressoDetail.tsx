@@ -1,89 +1,74 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AppContent, Comment } from '../types';
+import { AppContent } from '../types';
 import AIApologist from '../components/AIApologist';
-
-interface ExpressoDetailProps {
-  content: AppContent;
-  comments: Comment[];
-  onAddComment: (comment: Comment) => void;
-  onLikeComment: (id: string, postId: string) => void;
-  markAsRead: (id: string) => void;
-  readPostIds: string[];
-  onToggleSave: (id: string) => void;
-  onToggleLike: (id: string) => void;
-}
+import { commentsService } from '../lib/firebase';
 
 const CommentItem: React.FC<{
-  comment: Comment;
-  allComments: Comment[];
-  onReply: (parentId: string, text: string) => void;
-  onLike: (id: string, postId: string) => void;
-  isReply?: boolean;
+  comment: any;
   isDark?: boolean;
-}> = ({ comment, allComments, onReply, onLike, isReply, isDark }) => {
+}> = ({ comment, isDark }) => {
   return (
-    <div className={`flex flex-col gap-3 ${isReply ? 'ml-8 mt-4 border-l-2 border-slate-200 pl-4' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100') + ' p-5 rounded-[24px] border'}`}>
+    <div className={`p-5 rounded-[24px] border transition-all animate-in fade-in slide-in-from-left-4 duration-300 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
       <div className="flex gap-3">
-        <img src={comment.userAvatar} className={`${isReply ? 'size-8' : 'size-10'} rounded-full border-2 ${isDark ? 'border-slate-700' : 'border-white'} shadow-sm object-cover`} alt={comment.userName} />
+        <div className="size-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
+          {comment.usuario?.substring(0,1).toUpperCase()}
+        </div>
         <div className="flex-1">
           <div className="flex justify-between items-start mb-1">
             <div>
-              <h5 className={`${isReply ? 'text-[11px]' : 'text-xs'} font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{comment.userName}</h5>
-              <p className="text-[9px] text-slate-400 font-medium">{comment.userInfo}</p>
+              <h5 className={`text-xs font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{comment.usuario}</h5>
+              <p className="text-[9px] text-slate-400 font-medium">Comunidade SomosUm</p>
             </div>
             <span className="text-[9px] text-slate-300 font-bold">{comment.time}</span>
           </div>
-          <p className={`${isReply ? 'text-xs' : 'text-sm'} leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{comment.text}</p>
-          <div className="flex items-center gap-6 mt-3">
-            <button onClick={() => comment.postId && onLike(comment.id, comment.postId)} className={`flex items-center gap-1 active:scale-125 transition-all ${comment.isLiked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}>
-              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: comment.isLiked ? "'FILL' 1" : "" }}>favorite</span>
-              <span className="text-[10px] font-bold">{comment.likes}</span>
-            </button>
-          </div>
+          <p className={`text-sm leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{comment.texto}</p>
         </div>
       </div>
     </div>
   );
 };
 
-const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAddComment, onLikeComment, markAsRead, readPostIds, onToggleSave, onToggleLike }) => {
+const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onToggleLike }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const item = content.expressos.find(e => e.id === id);
+  const item = content.expressos.find((e: any) => e.id === id);
   const isDark = content.profile.isDarkMode;
   const isLiked = id ? content.profile.likedPostIds.includes(id) : false;
   const isSaved = id ? content.profile.savedPostIds.includes(id) : false;
+  
+  const [realtimeComments, setRealtimeComments] = useState<any[]>([]);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showAI, setShowAI] = useState(false);
 
-  const rootComments = comments.filter(c => c.postId === id && !c.parentId);
-  
-  const processedBody = useMemo(() => {
-    if (!item) return '';
-    return item.content.replace(/\\n/g, '\n').trim();
-  }, [item]);
-
   useEffect(() => {
-    if (item) window.scrollTo(0, 0);
-  }, [item]);
+    if (!id) return;
+    // O segredo para não travar: O listener é removido quando você sai da página
+    const unsubscribe = commentsService.subscribeToComments(id, (comments) => {
+      setRealtimeComments(comments);
+    });
+    return () => unsubscribe();
+  }, [id]);
 
-  const handleSendComment = () => {
+  const handleSendComment = async () => {
     if (!commentText.trim() || !id) return;
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      userName: content.profile.name,
-      userAvatar: content.profile.avatarUrl,
-      userInfo: `${content.profile.church} • ${content.profile.education}`,
-      text: commentText,
-      likes: 0,
-      time: "Agora",
-      postId: id
+    
+    const newComment = {
+      usuario: content.profile.name || "Explorador",
+      texto: commentText,
+      userAvatar: content.profile.avatarUrl
     };
-    onAddComment(newComment);
+
     setCommentText('');
     setShowCommentBox(false);
+
+    try {
+      await commentsService.addComment(id, newComment);
+    } catch (err) {
+      console.error("Erro ao enviar:", err);
+    }
   };
 
   if (!item) return <div className="p-10 text-center font-bold">Post não encontrado.</div>;
@@ -107,44 +92,15 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
            <h1 className={`text-[34px] font-[900] font-display leading-[1.1] tracking-tighter mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
              {item.title}
            </h1>
-           {item.subtitle && (
-             <h2 className={`text-xl font-bold leading-tight ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-               {item.subtitle}
-             </h2>
-           )}
         </div>
 
         <div className="rounded-[32px] overflow-hidden shadow-xl mb-10 border border-slate-100">
           <img src={item.imageUrl} alt={item.title} className="w-full h-72 object-cover" />
         </div>
 
-        {item.analogy && (
-          <div className={`mb-10 p-8 rounded-[32px] border shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 text-white shadow-xl'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                <span className="material-symbols-outlined">{item.analogy.icon}</span>
-              </div>
-              <h4 className="text-sm font-black uppercase tracking-widest text-white">
-                {item.analogy.title}
-              </h4>
-            </div>
-            <p className="text-base italic font-medium leading-relaxed text-slate-100">"{item.analogy.text}"</p>
-          </div>
-        )}
-
         <div className={`whitespace-pre-line mb-12 text-[17px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
-          {processedBody}
+          {item.content.replace(/\\n/g, '\n').trim()}
         </div>
-
-        {item.bibleReference && (
-          <div className={`mb-12 p-8 rounded-[32px] border-2 border-dashed flex flex-col items-center text-center gap-4 ${isDark ? 'bg-blue-900/10 border-blue-800/40' : 'bg-blue-50/50 border-blue-200/50'}`}>
-            <span className="material-symbols-outlined text-blue-600 text-4xl">auto_stories</span>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-600 mb-2">Pilar da Fé</p>
-              <h4 className={`text-base font-black italic leading-relaxed ${isDark ? 'text-white' : 'text-slate-800'}`}>"{item.bibleReference}"</h4>
-            </div>
-          </div>
-        )}
 
         <div className="flex items-center justify-between gap-4 mb-12">
           <button onClick={() => id && onToggleLike(id)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 transition-all active:scale-95 ${isLiked ? 'text-red-500 border-red-100 bg-red-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
@@ -165,12 +121,19 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
           </div>
         )}
 
-        <section className="mb-12 space-y-6">
-          <h3 className={`text-xl font-black font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>Discussão</h3>
-          <div className="space-y-6">
-            {rootComments.map(comment => (
-              <CommentItem key={comment.id} comment={comment} allComments={comments} onReply={()=>{}} onLike={onLikeComment} isDark={isDark} />
-            ))}
+        <section className="mb-12 space-y-4">
+          <h3 className={`text-xl font-black font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>Discussão em Tempo Real</h3>
+          <div className="space-y-4">
+            {realtimeComments.length === 0 ? (
+               <div className="py-12 text-center opacity-30">
+                  <span className="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+                  <p className="text-xs font-black uppercase">Seja o primeiro a opinar</p>
+               </div>
+            ) : (
+              realtimeComments.map(comment => (
+                <CommentItem key={comment.id} comment={comment} isDark={isDark} />
+              ))
+            )}
           </div>
         </section>
 
@@ -181,11 +144,7 @@ const ExpressoDetail: React.FC<ExpressoDetailProps> = ({ content, comments, onAd
       </main>
 
       {/* Floating Action Button for AI Mentor */}
-      <button 
-        onClick={() => setShowAI(true)}
-        className="fixed bottom-28 right-6 size-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform hover:bg-blue-700 animate-bounce"
-        style={{ animationDuration: '3s' }}
-      >
+      <button onClick={() => setShowAI(true)} className="fixed bottom-28 right-6 size-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
         <span className="material-symbols-outlined text-[28px]">smart_toy</span>
       </button>
 
