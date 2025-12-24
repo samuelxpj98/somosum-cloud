@@ -7,12 +7,22 @@ import { commentsService } from '../lib/firebase';
 
 export const FIXED_CATEGORIES = [
   { label: 'Todos', icon: 'grid_view' },
-  { label: 'Fé e Ciência', icon: 'science' },
-  { label: 'Filosofia', icon: 'psychology' },
-  { label: 'Teologia', icon: 'menu_book' },
-  { label: 'História', icon: 'history_edu' },
-  { label: 'Cultura', icon: 'theater_comedy' },
+  { label: 'Razão & Ciência', icon: 'science' },
+  { label: 'Evidências', icon: 'history_edu' },
+  { label: 'Vida & Dilemas', icon: 'psychology' },
+  { label: 'Identidade', icon: 'fingerprint' },
+  { label: 'Fé & Cultura', icon: 'theater_comedy' },
 ];
+
+const getCategoryColor = (category: string) => {
+  const cat = category?.toUpperCase() || '';
+  if (cat.includes('CIÊNCIA') || cat.includes('RAZÃO')) return 'bg-blue-600';
+  if (cat.includes('EVIDÊNCIAS')) return 'bg-amber-700';
+  if (cat.includes('VIDA') || cat.includes('DILEMAS')) return 'bg-rose-600';
+  if (cat.includes('IDENTIDADE')) return 'bg-indigo-600';
+  if (cat.includes('CULTURA') || cat.includes('FÉ')) return 'bg-purple-600';
+  return 'bg-slate-600';
+};
 
 const DetailedArticleCard: React.FC<{ 
   item: Expresso; 
@@ -21,6 +31,8 @@ const DetailedArticleCard: React.FC<{
   rank?: number;
 }> = ({ item, isRead, isDark, rank }) => {
   const navigate = useNavigate();
+  const categoryColor = getCategoryColor(item.categoryFull || item.category);
+  
   return (
     <div 
       onClick={() => navigate(`/aprofundar/${item.id}`)}
@@ -45,7 +57,7 @@ const DetailedArticleCard: React.FC<{
 
       <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
         <div className="flex items-center gap-3 mb-3">
-          <span className="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+          <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
             {item.categoryFull || item.category}
           </span>
           <span className="text-white/70 text-[10px] font-black uppercase tracking-widest">
@@ -114,9 +126,14 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
 
         {/* Estudos Alta Moagem Fina */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="material-symbols-outlined text-orange-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+              <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
+              Artigos com mais reflexões, curtidas e comentários.
+            </p>
           </div>
           <div className="space-y-6">
             {trending.map((item, index) => (
@@ -147,7 +164,9 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
                 <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                  <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block">{item.category}</span>
+                  <span className={`text-[9px] font-black ${getCategoryColor(item.categoryFull || item.category).replace('bg-', 'text-')} uppercase tracking-widest mb-1 block`}>
+                    {item.category}
+                  </span>
                   <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2">{item.title}</h4>
                 </div>
               </div>

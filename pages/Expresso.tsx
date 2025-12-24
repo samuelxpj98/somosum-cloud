@@ -7,11 +7,12 @@ import { commentsService } from '../lib/firebase';
 
 const getCategoryColor = (category: string) => {
   const cat = category?.toUpperCase() || '';
-  if (cat.includes('CIÊNCIA')) return 'bg-blue-600';
-  if (cat.includes('HISTÓRIA')) return 'bg-purple-600';
-  if (cat.includes('IDENTIDADE')) return 'bg-amber-500';
-  if (cat.includes('CULTURA')) return 'bg-indigo-600';
-  return 'bg-blue-600';
+  if (cat.includes('CIÊNCIA') || cat.includes('RAZÃO')) return 'bg-blue-600';
+  if (cat.includes('EVIDÊNCIAS')) return 'bg-amber-700';
+  if (cat.includes('VIDA') || cat.includes('DILEMAS')) return 'bg-rose-600';
+  if (cat.includes('IDENTIDADE')) return 'bg-indigo-600';
+  if (cat.includes('CULTURA') || cat.includes('FÉ')) return 'bg-purple-600';
+  return 'bg-slate-600';
 };
 
 const Card: React.FC<{ 
@@ -110,9 +111,14 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
 
         {/* Seção Alta Degustação */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="material-symbols-outlined text-orange-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Degustação</h3>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+              <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Degustação</h3>
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
+              Posts com mais curtidas e comentários do APP.
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {trending.map((item, index) => (
