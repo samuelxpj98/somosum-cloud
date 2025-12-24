@@ -14,7 +14,12 @@ export const FIXED_CATEGORIES = [
   { label: 'Cultura', icon: 'theater_comedy' },
 ];
 
-const DetailedArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?: boolean }> = ({ item, isRead, isDark }) => {
+const DetailedArticleCard: React.FC<{ 
+  item: Expresso; 
+  isRead?: boolean; 
+  isDark?: boolean;
+  rank?: number;
+}> = ({ item, isRead, isDark, rank }) => {
   const navigate = useNavigate();
   return (
     <div 
@@ -24,6 +29,13 @@ const DetailedArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?:
       <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
       
+      {/* Ranking Badge */}
+      {rank !== undefined && (
+        <div className="absolute top-6 left-6 z-30 bg-orange-500 text-white size-10 rounded-2xl flex items-center justify-center font-black text-lg shadow-xl shadow-orange-600/40 border border-white/20 animate-in zoom-in-50 duration-500">
+          {rank}
+        </div>
+      )}
+
       {isRead && (
         <div className="absolute top-6 right-6 z-20 bg-emerald-500 text-white flex items-center gap-1.5 px-4 py-2 rounded-full shadow-xl border border-white/20 scale-90">
           <span className="material-symbols-outlined text-[16px]">check_circle</span>
@@ -55,6 +67,7 @@ const DetailedArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?:
 
 const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; content: any }> = ({ userPosts, readPostIds, content }) => {
   const [allComments, setAllComments] = useState<any[]>([]);
+  const [showAllRecent, setShowAllRecent] = useState(false);
   const isDark = content.profile.isDarkMode;
 
   useEffect(() => {
@@ -71,16 +84,18 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
     });
 
     const sortedByEngagement = [...scored].sort((a, b) => b.engagement - a.engagement);
-    const trendingItems = sortedByEngagement.slice(0, 2);
+    const trendingItems = sortedByEngagement.slice(0, 4);
     const trendingIds = trendingItems.map(i => i.id);
     
     const recentItems = scored
       .filter(item => !trendingIds.includes(item.id))
-      .sort((a, b) => b.id.localeCompare(a.id))
-      .slice(0, 4);
+      .sort((a, b) => b.id.localeCompare(a.id));
 
-    return { trending: trendingItems, recent: recentItems };
-  }, [content.sheetPosts, allComments]);
+    return { 
+      trending: trendingItems, 
+      recent: showAllRecent ? recentItems : recentItems.slice(0, 4) 
+    };
+  }, [content.sheetPosts, allComments, showAllRecent]);
 
   return (
     <div className={`min-h-screen pb-32 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
@@ -104,17 +119,27 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
             <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
           </div>
           <div className="space-y-6">
-            {trending.map(item => (
-              <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />
+            {trending.map((item, index) => (
+              <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
             ))}
           </div>
         </section>
 
         {/* Estudos Recentes */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
-            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+              <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
+            </div>
+            {(content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR').length > 4 && (
+              <button 
+                onClick={() => setShowAllRecent(!showAllRecent)}
+                className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
+              >
+                {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {recent.map(item => (

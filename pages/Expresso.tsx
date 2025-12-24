@@ -19,7 +19,8 @@ const Card: React.FC<{
   isGrid?: boolean;
   isRead?: boolean;
   isDark?: boolean;
-}> = ({ item, isGrid, isRead, isDark }) => {
+  rank?: number;
+}> = ({ item, isGrid, isRead, isDark, rank }) => {
   const navigate = useNavigate();
   return (
     <div 
@@ -29,6 +30,13 @@ const Card: React.FC<{
       <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity group-hover:opacity-90"></div>
       
+      {/* Ranking Badge */}
+      {rank !== undefined && (
+        <div className="absolute top-4 left-4 z-30 bg-orange-500 text-white size-8 rounded-xl flex items-center justify-center font-black shadow-lg shadow-orange-600/40 border border-white/20 animate-in zoom-in-50 duration-500">
+          {rank}
+        </div>
+      )}
+
       {isRead && (
         <div className="absolute top-4 right-4 z-20 bg-emerald-500/90 backdrop-blur-md text-white flex items-center gap-1 px-3 py-1 rounded-full shadow-lg border border-white/20 scale-90">
           <span className="material-symbols-outlined text-[14px]">check</span>
@@ -55,6 +63,7 @@ const Card: React.FC<{
 
 const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = ({ content, readPostIds }) => {
   const [allComments, setAllComments] = useState<any[]>([]);
+  const [showAllRecent, setShowAllRecent] = useState(false);
   const isDark = content.profile.isDarkMode;
 
   useEffect(() => {
@@ -76,11 +85,13 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
     
     const recentItems = scored
       .filter(item => !trendingIds.includes(item.id))
-      .sort((a, b) => b.id.localeCompare(a.id))
-      .slice(0, 6);
+      .sort((a, b) => b.id.localeCompare(a.id));
 
-    return { trending: trendingItems, recent: recentItems };
-  }, [content.expressos, allComments]);
+    return { 
+      trending: trendingItems, 
+      recent: showAllRecent ? recentItems : recentItems.slice(0, 4) 
+    };
+  }, [content.expressos, allComments, showAllRecent]);
 
   return (
     <div className={`pb-32 min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
@@ -104,17 +115,27 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
             <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Degustação</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {trending.map(item => (
-              <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} />
+            {trending.map((item, index) => (
+              <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
             ))}
           </div>
         </section>
 
         {/* Seção Recentes */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
-            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Moídos na Hora</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+              <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Moídos na Hora</h3>
+            </div>
+            {content.expressos.length > 4 && (
+              <button 
+                onClick={() => setShowAllRecent(!showAllRecent)}
+                className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
+              >
+                {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {recent.map(item => (
