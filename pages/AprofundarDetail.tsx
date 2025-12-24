@@ -80,7 +80,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   const processedContent = useMemo(() => {
     if (!displayItem?.content) return '';
-    // Converte \n literais em quebras reais e renderiza Markdown
     const raw = displayItem.content.replace(/\\n/g, '\n');
     return marked.parse(raw);
   }, [displayItem?.content]);
@@ -111,7 +110,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
       {/* Main Content */}
       <main className={`relative z-20 -mt-24 px-8 pt-16 pb-20 rounded-t-[56px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
         
-        <div className="text-center mb-16 animate-in slide-in-from-bottom-8 duration-700">
+        <div className="text-center mb-12 animate-in slide-in-from-bottom-8 duration-700">
            <span className="text-[#3B82F6] font-bold text-[12px] uppercase tracking-[1.2px] mb-5 inline-block">
              {displayItem.categoryFull || displayItem.category}
            </span>
@@ -125,9 +124,24 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
            )}
         </div>
 
+        {/* VERSÍCULO CHAVE / ANALOGIA - AGORA ANTES DO TEXTO PRINCIPAL */}
+        {displayItem.analogy && displayItem.analogy.text && (
+          <div className={`mb-12 p-10 rounded-[40px] border transition-all animate-in slide-in-from-bottom-6 duration-1000 ${isDark ? 'bg-blue-600/5 border-blue-500/20 shadow-2xl shadow-blue-900/10' : 'bg-blue-50/30 border-blue-100 shadow-xl shadow-blue-100/20'}`}>
+            <div className="flex items-center gap-5 mb-6">
+              <div className="size-14 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
+                <span className="material-symbols-outlined text-[32px]">{displayItem.analogy.icon || 'menu_book'}</span>
+              </div>
+              <h4 className="text-[13px] font-black uppercase tracking-[0.25em] text-blue-600">{displayItem.analogy.title || 'Versículo Chave'}</h4>
+            </div>
+            <p className={`text-[17px] leading-[1.8] font-medium whitespace-pre-wrap ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+              {displayItem.analogy.text.replace(/\\n/g, '\n')}
+            </p>
+          </div>
+        )}
+
         {/* Markdown Content Area for Deep Dives */}
         <div 
-          className={`prose prose-lg max-w-none mb-16 text-[19px] leading-[1.8] font-medium animate-in fade-in duration-1000 
+          className={`prose prose-lg max-w-none mb-10 text-[19px] leading-[1.8] font-medium animate-in fade-in duration-1000 
             ${isDark ? 'prose-invert text-slate-400 prose-p:text-slate-400' : 'text-[#334155] prose-p:text-[#334155]'}
             prose-p:mb-8 prose-h2:text-blue-600 dark:prose-h2:text-blue-400
           `}

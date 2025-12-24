@@ -74,7 +74,6 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
 
   const processedContent = useMemo(() => {
     if (!item?.content) return '';
-    // Converte \n literais em quebras reais e renderiza Markdown
     const raw = item.content.replace(/\\n/g, '\n');
     return marked.parse(raw);
   }, [item?.content]);
@@ -105,7 +104,7 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
       {/* Main Content */}
       <main className={`relative z-20 -mt-20 px-6 pt-12 pb-16 rounded-t-[48px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
         
-        <div className="text-center mb-12 animate-in slide-in-from-bottom-6 duration-700">
+        <div className="text-center mb-10 animate-in slide-in-from-bottom-6 duration-700">
           <span className="text-[12px] font-bold text-[#3B82F6] uppercase tracking-[1.2px] mb-4 block">
             {item.categoryFull || item.category}
           </span>
@@ -119,9 +118,24 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           )}
         </div>
 
+        {/* BLOCO DE ANALOGIA - AGORA ANTES DO TEXTO PRINCIPAL */}
+        {item.analogy && item.analogy.text && (
+          <div className={`mb-10 p-8 rounded-[32px] border transition-all animate-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-slate-50 border-slate-100'}`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="size-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>{item.analogy.icon || 'bolt'}</span>
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">{item.analogy.title || 'A Analogia'}</h4>
+            </div>
+            <p className={`text-[15px] leading-relaxed font-medium whitespace-pre-wrap ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              {item.analogy.text.replace(/\\n/g, '\n')}
+            </p>
+          </div>
+        )}
+
         {/* Markdown Content Area */}
         <div 
-          className={`prose prose-slate max-w-none mb-14 text-[17px] leading-[1.7] animate-in fade-in duration-1000 
+          className={`prose prose-slate max-w-none mb-10 text-[17px] leading-[1.7] animate-in fade-in duration-1000 
             ${isDark ? 'prose-invert text-slate-400 prose-p:text-slate-400' : 'text-[#334155] prose-p:text-[#334155]'}
             prose-p:mb-6 prose-strong:text-blue-600 dark:prose-strong:text-blue-400
           `}
