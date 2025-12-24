@@ -8,8 +8,6 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ isDarkMode }) => {
   const location = useLocation();
-  
-  // A barra deve estar visível em quase todos os lugares, exceto na Landing Page Inicial
   const hidePaths = ['/'];
   if (hidePaths.includes(location.pathname)) return null;
 
@@ -27,6 +25,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ isDarkMode }) => {
           <span className="material-symbols-outlined text-[26px]" style={{ fontVariationSettings: location.pathname === '/expresso' ? "'FILL' 1" : "" }}>bolt</span>
         </div>
         <span className="text-[10px] font-black uppercase tracking-tighter">Expresso</span>
+      </NavLink>
+
+      <NavLink to="/comunidade" className={({isActive}) => `flex flex-col items-center gap-1.5 transition-colors ${isActive ? 'text-blue-600' : (isDarkMode ? 'text-slate-600' : 'text-slate-400')}`}>
+        <div className={`size-12 rounded-2xl flex items-center justify-center transition-all ${location.pathname === '/comunidade' ? 'bg-blue-600/10' : ''}`}>
+          <span className="material-symbols-outlined text-[26px]" style={{ fontVariationSettings: location.pathname === '/comunidade' ? "'FILL' 1" : "" }}>forum</span>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-tighter">Comunidade</span>
       </NavLink>
       
       <NavLink to="/aprofundar" className={({isActive}) => `flex flex-col items-center gap-1.5 transition-colors ${isActive ? 'text-blue-600' : (isDarkMode ? 'text-slate-600' : 'text-slate-400')}`}>

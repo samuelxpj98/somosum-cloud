@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import Home from './pages/Home';
 import ExpressoPage from './pages/Expresso';
 import ExpressoDetail from './pages/ExpressoDetail';
+import Comunidade from './pages/Comunidade';
 import Aprofundar from './pages/Aprofundar';
 import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
@@ -38,8 +39,6 @@ const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1v
 const App: React.FC = () => {
   const [data, setData] = useState<AppContent>(FALLBACK_DATA);
   const [loading, setLoading] = useState(true);
-  const [globalComments, setGlobalComments] = useState<Comment[]>([]);
-  const [userCreatedPosts, setUserCreatedPosts] = useState<Expresso[]>([]);
   const [readPostIds, setReadPostIds] = useState<string[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
@@ -59,19 +58,8 @@ const App: React.FC = () => {
         }
         setUserProfile(initialProfile);
 
-        const savedUserPosts = localStorage.getItem('user_created_posts');
-        if (savedUserPosts) setUserCreatedPosts(JSON.parse(savedUserPosts));
-        
         const savedReadPosts = localStorage.getItem('read_posts');
         if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
-
-        try {
-          const response = await fetch('conteudo.json');
-          if (response.ok) {
-            const json = await response.json();
-            setData({ ...json, expressos: [] });
-          }
-        } catch (e) { console.warn("Usando fallback para branding."); }
 
         if (GOOGLE_SHEETS_TSV_URL) {
           try {
@@ -125,18 +113,13 @@ const App: React.FC = () => {
 
   const mergedContent = useMemo(() => {
     const currentProfile = userProfile || FALLBACK_DATA.profile;
-    const allPosts = [
-      ...userCreatedPosts.filter(p => p.status === 'published'),
-      ...sheetPosts
-    ];
-
     return {
       ...data,
-      expressos: allPosts.filter(p => p.categoryType === 'EXPRESSO' || (!p.categoryType && p.category !== 'APROFUNDAMENTO')),
+      expressos: sheetPosts.filter(p => p.categoryType === 'EXPRESSO' || (!p.categoryType && p.category !== 'APROFUNDAMENTO')),
       sheetPosts: sheetPosts,
       profile: currentProfile
     };
-  }, [data, userCreatedPosts, userProfile, sheetPosts]);
+  }, [data, userProfile, sheetPosts]);
 
   const updateProfile = (updated: UserProfile) => {
     setUserProfile(updated);
@@ -166,10 +149,10 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-white">
+    <div className="flex h-screen items-center justify-center bg-[#F1F5F9]">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sincronizando com a Nuvem...</p>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Conectando Comunidade...</p>
       </div>
     </div>
   );
@@ -180,11 +163,13 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landing content={mergedContent} />} />
           <Route path="/home" element={<Home content={mergedContent} missions={dynamicMissions} />} />
-          <Route path="/expresso" element={<ExpressoPage content={mergedContent} comments={globalComments} onAddComment={() => {}} onLikeComment={() => {}} readPostIds={readPostIds} />} />
+          <Route path="/expresso" element={<ExpressoPage content={mergedContent} readPostIds={readPostIds} />} />
           <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
-          <Route path="/aprofundar" element={<Aprofundar content={mergedContent} userPosts={userCreatedPosts} readPostIds={readPostIds} />} />
+          <Route path="/comunidade" element={<Comunidade content={mergedContent} />} />
+          {/* Fix: Pass sheetPosts to userPosts prop in Aprofundar route to resolve missing property error */}
+          <Route path="/aprofundar" element={<Aprofundar content={mergedContent} readPostIds={readPostIds} userPosts={sheetPosts} />} />
           <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
-          <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={[...sheetPosts, ...userCreatedPosts]} />} />
+          <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={sheetPosts} />} />
         </Routes>
         <BottomNav isDarkMode={mergedContent.profile.isDarkMode} />
       </div>

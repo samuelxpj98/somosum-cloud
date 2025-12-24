@@ -8,12 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Importação otimizada do Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Lora:ital,wght@1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     
     <style>
-      /* Forçar a fonte dos ícones para evitar que apareçam como texto */
+      :root {
+        --primary-navy: #1E293B;
+        --accent-blue: #3B82F6;
+        --text-body: #334155;
+        --bg-app: #F1F5F9;
+      }
+
       .material-symbols-outlined {
         font-family: 'Material Symbols Outlined' !important;
         font-weight: normal;
@@ -32,43 +37,47 @@
 
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f8fafc;
+        background-color: var(--bg-app);
+        color: var(--text-body);
         overflow-x: hidden;
+        line-height: 1.6;
       }
-      .font-display {
-        font-family: 'Lexend', sans-serif;
+
+      /* Títulos e Labels usam Inter Bold */
+      .font-display { 
+        font-family: 'Inter', sans-serif; 
+        font-weight: 700; 
       }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
+      
+      /* Citações usam Lora Italic */
+      .font-serif { 
+        font-family: 'Lora', serif; 
+        font-style: italic; 
       }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      .page-enter {
-        animation: fadeIn 0.4s ease-out;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+      
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      .soft-shadow {
+        box-shadow: 0 4px 20px -2px rgba(30, 41, 59, 0.05);
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
-    "marked": "https://esm.sh/marked@^17.0.1",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "firebase/": "https://esm.sh/firebase@^12.7.0/"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+        "vite": "https://esm.sh/vite@^7.3.0",
+        "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+        "marked": "https://esm.sh/marked@^17.0.1",
+        "firebase/": "https://esm.sh/firebase@^12.7.0/"
+      }
+    }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

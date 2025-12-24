@@ -1,144 +1,134 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Expresso } from '../types';
-
-interface AprofundarProps {
-  userPosts: Expresso[];
-  readPostIds: string[];
-  content: any; 
-}
+import Header from '../components/Header';
+import { commentsService } from '../lib/firebase';
 
 export const FIXED_CATEGORIES = [
-  { label: 'Todos', icon: 'apps' },
+  { label: 'Todos', icon: 'grid_view' },
   { label: 'Fé e Ciência', icon: 'science' },
-  { label: 'Evidências', icon: 'history_edu' },
-  { label: 'Teologia', icon: 'menu_book' },
   { label: 'Filosofia', icon: 'psychology' },
+  { label: 'Teologia', icon: 'menu_book' },
+  { label: 'História', icon: 'history_edu' },
   { label: 'Cultura', icon: 'theater_comedy' },
 ];
 
-// Card detalhado para a visão inicial de destaque
 const DetailedArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?: boolean }> = ({ item, isRead, isDark }) => {
-  const navigate = useNavigate();
-  return (
-    <div className={`rounded-[32px] overflow-hidden border shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative transition-colors ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-50'}`}>
-      <div className="aspect-[16/9] w-full relative overflow-hidden">
-        <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.title} />
-        {isRead && (
-          <div className="absolute top-4 right-4 z-20 bg-emerald-500 text-white flex items-center gap-1 px-3 py-1.5 rounded-full shadow-lg border border-white/20">
-            <span className="material-symbols-outlined text-[16px]">check_circle</span>
-            <span className="text-[10px] font-black uppercase tracking-widest">Lido</span>
-          </div>
-        )}
-      </div>
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-100">{item.category}</div>
-          <span className="text-slate-400 text-[10px] font-bold">• {item.readingTime}</span>
-        </div>
-        <h2 className={`text-xl font-black font-display mb-2 leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h2>
-        {item.subtitle && (
-          <p className="text-xs font-[800] mb-4 line-clamp-2 leading-relaxed text-blue-600">
-            {item.subtitle}
-          </p>
-        )}
-        <button onClick={() => navigate(`/aprofundar/${item.id}`)} className="w-full h-12 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
-          Ler Artigo
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Card compacto para a visão em grade
-const SmallArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?: boolean }> = ({ item, isRead, isDark }) => {
   const navigate = useNavigate();
   return (
     <div 
       onClick={() => navigate(`/aprofundar/${item.id}`)}
-      className={`rounded-[24px] overflow-hidden border shadow-sm flex flex-col animate-in zoom-in-95 duration-500 cursor-pointer active:scale-95 transition-all h-full ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-50'}`}
+      className={`rounded-[40px] overflow-hidden shadow-2xl mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700 relative aspect-[16/11] cursor-pointer group border-4 ${isDark ? 'border-slate-800' : 'border-white'}`}
     >
-      <div className="aspect-square w-full relative overflow-hidden">
-        <img src={item.imageUrl} className="w-full h-full object-cover" alt={item.title} />
-        {isRead && (
-          <div className="absolute top-2 right-2 z-10 size-6 bg-emerald-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-lg">
-            <span className="material-symbols-outlined text-[14px]">check</span>
-          </div>
-        )}
-      </div>
-      <div className="p-3 flex-1 flex flex-col justify-between">
-        <div>
-          <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest mb-1 block">{item.category}</span>
-          <h4 className={`text-[12px] font-black font-display leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h4>
+      <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+      
+      {isRead && (
+        <div className="absolute top-6 right-6 z-20 bg-emerald-500 text-white flex items-center gap-1.5 px-4 py-2 rounded-full shadow-xl border border-white/20 scale-90">
+          <span className="material-symbols-outlined text-[16px]">check_circle</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Lido</span>
         </div>
+      )}
+
+      <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+            {item.categoryFull || item.category}
+          </span>
+          <span className="text-white/70 text-[10px] font-black uppercase tracking-widest">
+            {item.readingTime}
+          </span>
+        </div>
+        <h2 className="text-[28px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter">
+          {item.title}
+        </h2>
+        {item.subtitle && (
+          <p className="text-[13px] font-medium text-white/80 line-clamp-2 italic">
+            "{item.subtitle}"
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content }) => {
-  const navigate = useNavigate();
-  const [showAll, setShowAll] = useState(false);
+const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; content: any }> = ({ userPosts, readPostIds, content }) => {
+  const [allComments, setAllComments] = useState<any[]>([]);
   const isDark = content.profile.isDarkMode;
 
-  const allItems = useMemo(() => {
-    const publishedUser = userPosts.filter(p => (p.categoryType === 'APROFUNDAR') && p.status === 'published');
-    const sheetAprofs = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
-    return [...publishedUser, ...sheetAprofs].sort((a, b) => b.id.localeCompare(a.id));
-  }, [userPosts, content.sheetPosts]);
+  useEffect(() => {
+    const unsubscribe = commentsService.getAllConversations(setAllComments);
+    return () => unsubscribe();
+  }, []);
+
+  const { trending, recent } = useMemo(() => {
+    const studies = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
+    
+    const scored = studies.map(item => {
+      const commentCount = allComments.filter(c => c.postId === item.id).length;
+      return { ...item, engagement: commentCount };
+    });
+
+    const sortedByEngagement = [...scored].sort((a, b) => b.engagement - a.engagement);
+    const trendingItems = sortedByEngagement.slice(0, 2);
+    const trendingIds = trendingItems.map(i => i.id);
+    
+    const recentItems = scored
+      .filter(item => !trendingIds.includes(item.id))
+      .sort((a, b) => b.id.localeCompare(a.id))
+      .slice(0, 4);
+
+    return { trending: trendingItems, recent: recentItems };
+  }, [content.sheetPosts, allComments]);
 
   return (
-    <div className={`min-h-screen pb-32 relative transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      <header className={`sticky top-0 z-50 px-6 pt-8 pb-6 border-b flex items-center justify-between transition-colors ${
-        isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-100'
-      } backdrop-blur-md`}>
-        <button onClick={() => showAll ? setShowAll(false) : navigate('/home')} className={`size-10 rounded-full flex items-center justify-center active:bg-slate-100 transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          <span className="material-symbols-outlined text-[28px]">{showAll ? 'grid_view' : 'arrow_back'}</span>
-        </button>
-        <div className="flex flex-col items-center">
-          <h1 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            {showAll ? 'Catálogo Completo' : 'Aprofundar'}
-          </h1>
-        </div>
-        <div className="w-10"></div>
-      </header>
+    <div className={`min-h-screen pb-32 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+      <Header content={content} />
+      
+      <main className="px-6 pt-10 space-y-12 animate-in fade-in duration-700">
+        <section>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-[40px] font-[900] font-display tracking-tight leading-none">Aprofundar</h1>
+            <span className="material-symbols-outlined text-blue-600 text-4xl">waves</span>
+          </div>
+          <p className="text-slate-400 text-[16px] font-medium leading-tight max-w-[320px]">
+            Indo além do aroma: estudos densos para uma cosmovisão moída na Verdade.
+          </p>
+        </section>
 
-      <main className="px-6 pt-8">
-        {allItems.length === 0 ? (
-          <div className="py-20 text-center opacity-30">
-            <span className="material-symbols-outlined text-6xl mb-4">inventory_2</span>
-            <p className="text-sm font-black uppercase">Nenhum estudo profundo encontrado.</p>
+        {/* Estudos em Alta */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <span className="material-symbols-outlined text-orange-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
           </div>
-        ) : showAll ? (
-          <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
-            {allItems.map(item => (
-              <SmallArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Sugestões de Leitura</p>
-            {allItems.slice(0, 4).map(item => (
+          <div className="space-y-6">
+            {trending.map(item => (
               <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />
             ))}
-            
-            {allItems.length > 4 && (
-              <button 
-                onClick={() => {
-                  setShowAll(true);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`w-full py-6 rounded-[32px] border-2 border-dashed font-black text-[11px] uppercase tracking-widest shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 ${
-                  isDark ? 'bg-slate-800/40 border-slate-700 text-blue-400' : 'bg-white border-blue-100 text-blue-600'
-                }`}
-              >
-                Ver tudo em Grade (2x2)
-                <span className="material-symbols-outlined text-sm">grid_view</span>
-              </button>
-            )}
           </div>
-        )}
+        </section>
+
+        {/* Estudos Recentes */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+            <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {recent.map(item => (
+              <div key={item.id} onClick={() => window.location.hash = `/aprofundar/${item.id}`} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'}`}>
+                <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                  <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block">{item.category}</span>
+                  <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2">{item.title}</h4>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, push, set, serverTimestamp } from "firebase/database";
+import { getDatabase, ref, onValue, push, set, update, increment, get } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
@@ -17,20 +17,16 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
 export const commentsService = {
-  // Escuta os comentários de um post específico
   subscribeToComments: (postId: string, callback: (comments: any[]) => void) => {
     const commentsRef = ref(db, 'conversas/' + postId);
-    
-    // O 'onValue' é o segredo do tempo real. Ele não trava o app porque roda fora da thread principal de renderização do React
     return onValue(commentsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Converte o objeto do Firebase em um Array para o React entender
         const commentsList = Object.entries(data).map(([key, value]: [string, any]) => ({
           id: key,
           ...value,
           time: value.hora ? new Date(value.hora).toLocaleDateString() : 'Agora'
-        })).reverse(); // Mais novos primeiro
+        }));
         callback(commentsList);
       } else {
         callback([]);
@@ -38,13 +34,51 @@ export const commentsService = {
     });
   },
 
-  // Envia um comentário
+  getAllConversations: (callback: (allComments: any[]) => void) => {
+    const commentsRef = ref(db, 'conversas');
+    return onValue(commentsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return callback([]);
+      
+      const flattened: any[] = [];
+      Object.keys(data).forEach(postId => {
+        Object.entries(data[postId]).forEach(([commentId, comment]: [string, any]) => {
+          flattened.push({
+            id: commentId,
+            postId,
+            ...comment
+          });
+        });
+      });
+      callback(flattened);
+    });
+  },
+
   addComment: async (postId: string, comment: any) => {
     const commentsRef = ref(db, 'conversas/' + postId);
     const newCommentRef = push(commentsRef);
     return set(newCommentRef, {
       ...comment,
+      likes: 0,
       hora: Date.now()
+    });
+  },
+
+  addReply: async (postId: string, parentId: string, reply: any) => {
+    const commentsRef = ref(db, `conversas/${postId}`);
+    const newCommentRef = push(commentsRef);
+    return set(newCommentRef, {
+      ...reply,
+      parentId,
+      likes: 0,
+      hora: Date.now()
+    });
+  },
+
+  likeComment: async (postId: string, commentId: string) => {
+    const commentRef = ref(db, `conversas/${postId}/${commentId}`);
+    return update(commentRef, {
+      likes: increment(1)
     });
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { marked } from 'marked';
@@ -30,8 +31,8 @@ const AIApologist: React.FC<AIApologistProps> = ({ articleTitle, articleContent,
     setIsTyping(true);
 
     try {
-      // Inicialização segura utilizando a variável de ambiente process.env.API_KEY injetada pelo Cloudflare
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // Fix: Direct use of process.env.API_KEY as per guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       const systemInstruction = `Você é o Mentor SomosUm, um assistente especializado em apologética cristã, teologia e filosofia. 
       Você está ajudando um jovem a entender o artigo: "${articleTitle}". 
