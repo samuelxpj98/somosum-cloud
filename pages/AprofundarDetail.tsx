@@ -80,7 +80,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
       </header>
 
       <main className="px-6 py-4">
-        {/* Título e Subtítulo (Subtítulo agora é Azul) */}
+        {/* Título e Subtítulo em Azul */}
         <div className="mb-8 text-center flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {displayItem.categoryFull || displayItem.category}
@@ -95,17 +95,18 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
            )}
         </div>
 
+        {/* Imagem de Capa */}
         <div className="rounded-[32px] overflow-hidden shadow-xl mb-10 border border-slate-100 animate-in zoom-in-95 duration-700">
           <img src={displayItem.imageUrl} alt={displayItem.title} className="w-full h-72 object-cover" />
         </div>
 
-        {/* Card de Analogia / Contexto (Antes do Texto) */}
+        {/* Card de Analogia / Contexto (Fundo Azulado) */}
         {displayItem.analogy && displayItem.analogy.text && (
-          <div className={`mb-10 p-7 rounded-[40px] border-2 border-dashed relative animate-in slide-in-from-right-4 duration-700 ${isDark ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="absolute -top-5 left-8 size-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+          <div className={`mb-10 p-7 rounded-[40px] border-2 border-dashed relative animate-in slide-in-from-right-4 duration-700 ${isDark ? 'bg-blue-900/15 border-blue-800/30' : 'bg-blue-50/50 border-blue-100'}`}>
+            <div className="absolute -top-5 left-8 size-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
               <span className="material-symbols-outlined text-[20px]">{displayItem.analogy.icon || 'menu_book'}</span>
             </div>
-            <h4 className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.25em] mb-4 mt-1">{displayItem.analogy.title || 'Analogia do Estudo'}</h4>
+            <h4 className="text-blue-600 font-black text-[10px] uppercase tracking-[0.25em] mb-4 mt-1">{displayItem.analogy.title || 'Analogia do Estudo'}</h4>
             <p className={`text-lg font-bold leading-relaxed ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
               {displayItem.analogy.text}
             </p>
@@ -117,16 +118,16 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           {displayItem.content.replace(/\\n/g, '\n').trim()}
         </div>
 
-        {/* PILAR DE FÉ (Versículo) - APÓS O TEXTO */}
+        {/* PILAR DE FÉ (Fundo Azulado) - APÓS O TEXTO */}
         {displayItem.bibleReference && (
-          <div className={`mb-12 p-8 rounded-[40px] border-2 border-indigo-100 relative transition-all shadow-sm ${isDark ? 'bg-indigo-900/10 border-indigo-800/30' : 'bg-white'}`}>
+          <div className={`mb-12 p-8 rounded-[40px] border relative transition-all shadow-sm ${isDark ? 'bg-blue-900/20 border-blue-800/40' : 'bg-blue-50 border-blue-100'}`}>
             <div className="flex items-center gap-3 mb-4">
-               <div className="size-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md">
                  <span className="material-symbols-outlined text-[18px]">menu_book</span>
                </div>
-               <h4 className="text-indigo-600 font-black text-[11px] uppercase tracking-[0.25em]">Fundamento Bíblico</h4>
+               <h4 className="text-blue-600 font-black text-[11px] uppercase tracking-[0.25em]">Fundamento Bíblico</h4>
             </div>
-            <p className={`text-xl font-black font-display italic leading-tight ${isDark ? 'text-indigo-100' : 'text-indigo-900'}`}>
+            <p className={`text-xl font-black font-display italic leading-tight ${isDark ? 'text-blue-100' : 'text-blue-900'}`}>
               "{displayItem.bibleReference}"
             </p>
           </div>

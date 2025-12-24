@@ -77,7 +77,7 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
       </header>
 
       <main className="px-6 py-4">
-        {/* Título e Subtítulo (Subtítulo agora é Azul) */}
+        {/* Título e Subtítulo em Azul */}
         <div className="mb-8 text-center flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {item.categoryFull || item.category}
@@ -92,14 +92,14 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
            )}
         </div>
 
-        {/* Imagem de Capa */}
+        {/* Imagem de Capa no início */}
         <div className="rounded-[32px] overflow-hidden shadow-xl mb-10 border border-slate-100 animate-in zoom-in-95 duration-700">
           <img src={item.imageUrl} alt={item.title} className="w-full h-72 object-cover" />
         </div>
 
-        {/* Card de Analogia (Antes do Texto) */}
+        {/* Card de Analogia (Fundo Azulado) */}
         {item.analogy && item.analogy.text && (
-          <div className={`mb-10 p-6 rounded-[32px] border-2 border-dashed relative animate-in slide-in-from-right-4 duration-700 ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-blue-50/30 border-blue-100'}`}>
+          <div className={`mb-10 p-6 rounded-[32px] border-2 border-dashed relative animate-in slide-in-from-right-4 duration-700 ${isDark ? 'bg-blue-900/15 border-blue-800/30' : 'bg-blue-50/50 border-blue-100'}`}>
             <div className="absolute -top-5 left-6 size-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
               <span className="material-symbols-outlined text-[20px]">{item.analogy.icon || 'bolt'}</span>
             </div>
@@ -115,16 +115,16 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           {item.content.replace(/\\n/g, '\n').trim()}
         </div>
 
-        {/* PILAR DE FÉ (Versículo) - APÓS O TEXTO */}
+        {/* PILAR DE FÉ (Fundo Azulado) - APÓS O TEXTO */}
         {item.bibleReference && (
-          <div className={`mb-12 p-8 rounded-[40px] border relative transition-all ${isDark ? 'bg-amber-900/10 border-amber-800/30' : 'bg-amber-50 border-amber-100'}`}>
+          <div className={`mb-12 p-8 rounded-[40px] border transition-all ${isDark ? 'bg-blue-900/20 border-blue-800/40' : 'bg-blue-50 border-blue-100'}`}>
             <div className="flex items-center gap-3 mb-4">
-               <div className="size-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shadow-md">
+               <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md">
                  <span className="material-symbols-outlined text-[18px]">menu_book</span>
                </div>
-               <h4 className="text-amber-600 font-black text-[11px] uppercase tracking-[0.25em]">Pilar de Fé</h4>
+               <h4 className="text-blue-600 font-black text-[11px] uppercase tracking-[0.25em]">Pilar de Fé</h4>
             </div>
-            <p className={`text-xl font-black font-display italic leading-tight ${isDark ? 'text-amber-200' : 'text-amber-900'}`}>
+            <p className={`text-xl font-black font-display italic leading-tight ${isDark ? 'text-blue-100' : 'text-blue-900'}`}>
               "{item.bibleReference}"
             </p>
           </div>
