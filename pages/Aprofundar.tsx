@@ -89,15 +89,15 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
       <main className="px-6 pt-10 space-y-12 animate-in fade-in duration-700">
         <section>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-[40px] font-[900] font-display tracking-tight leading-none">Aprofundar</h1>
+            <h1 className="text-[40px] font-[900] font-display tracking-tight leading-none uppercase">Aprofundar</h1>
             <span className="material-symbols-outlined text-blue-600 text-4xl">waves</span>
           </div>
-          <p className="text-slate-400 text-[16px] font-medium leading-tight max-w-[320px]">
+          <p className="text-slate-400 text-[16px] font-medium leading-tight max-w-[340px]">
             Indo além do aroma: estudos densos para uma cosmovisão moída na Verdade.
           </p>
         </section>
 
-        {/* Estudos em Alta */}
+        {/* Estudos Alta Moagem Fina */}
         <section>
           <div className="flex items-center gap-2 mb-6">
             <span className="material-symbols-outlined text-orange-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>

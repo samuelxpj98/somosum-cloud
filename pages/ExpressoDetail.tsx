@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
+import { marked } from 'marked';
 
 const CommentItem: React.FC<{
   comment: any;
@@ -71,6 +72,13 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
     setShowCommentBox(false);
   };
 
+  const processedContent = useMemo(() => {
+    if (!item?.content) return '';
+    // Converte \n literais em quebras reais e renderiza Markdown
+    const raw = item.content.replace(/\\n/g, '\n');
+    return marked.parse(raw);
+  }, [item?.content]);
+
   const rootComments = useMemo(() => realtimeComments.filter(c => !c.parentId).sort((a,b) => b.hora - a.hora), [realtimeComments]);
 
   if (!item) return <div className="p-10 text-center font-bold">Conteúdo não encontrado.</div>;
@@ -111,9 +119,14 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           )}
         </div>
 
-        <div className={`whitespace-pre-line mb-14 text-[17px] leading-[1.6] animate-in fade-in duration-1000 ${isDark ? 'text-slate-400' : 'text-[#334155]'}`}>
-          {item.content.replace(/\\n/g, '\n').trim()}
-        </div>
+        {/* Markdown Content Area */}
+        <div 
+          className={`prose prose-slate max-w-none mb-14 text-[17px] leading-[1.7] animate-in fade-in duration-1000 
+            ${isDark ? 'prose-invert text-slate-400 prose-p:text-slate-400' : 'text-[#334155] prose-p:text-[#334155]'}
+            prose-p:mb-6 prose-strong:text-blue-600 dark:prose-strong:text-blue-400
+          `}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
 
         {/* Pilar de Fé */}
         {item.bibleReference && (

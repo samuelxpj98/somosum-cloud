@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppContent, Comment, Expresso, UserProfile } from './types';
+import { AppContent, Expresso, UserProfile } from './types';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import ExpressoPage from './pages/Expresso';
@@ -34,7 +34,13 @@ const FALLBACK_DATA: AppContent = {
   }
 };
 
-const GOOGLE_SHEETS_TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?output=tsv"; 
+// URLs reais fornecidas pelo usuário
+const SHEET_URLS = [
+  // Aba Expressos (GID 0)
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?gid=0&single=true&output=tsv",
+  // Aba Aprofundar (GID 922094770)
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?gid=922094770&single=true&output=tsv"
+];
 
 const App: React.FC = () => {
   const [data, setData] = useState<AppContent>(FALLBACK_DATA);
@@ -47,6 +53,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Carrega Perfil
         const savedProfile = localStorage.getItem('user_profile');
         let initialProfile: UserProfile;
         if (savedProfile) {
@@ -58,55 +65,69 @@ const App: React.FC = () => {
         }
         setUserProfile(initialProfile);
 
+        // Carrega Posts Lidos
         const savedReadPosts = localStorage.getItem('read_posts');
         if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
 
-        if (GOOGLE_SHEETS_TSV_URL) {
+        const allPosts: Expresso[] = [];
+        const allMissions: string[] = [];
+
+        await Promise.all(SHEET_URLS.map(async (url) => {
           try {
-            const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
-            const tsvText = await sheetRes.text();
-            const lines = tsvText.split('\n').slice(1);
-            const posts: Expresso[] = [];
-            const missions: string[] = [];
+            const res = await fetch(url);
+            const tsv = await res.text();
+            const lines = tsv.split('\n').slice(1);
+            
+            // Identifica o tipo padrão baseado no GID da URL
+            const isAprofundarTab = url.includes('gid=922094770');
+            const defaultType = isAprofundarTab ? "APROFUNDAR" : "EXPRESSO";
 
             lines.forEach((line, index) => {
               const parts = line.split('\t').map(p => p.trim());
               if (!parts[0]) return;
 
-              const tipo = parts[7]?.toUpperCase() || "EXPRESSO";
-              
+              // parts[7] ainda pode sobrescrever o tipo se preenchido manualmente na planilha
+              const tipo = parts[7]?.toUpperCase() || defaultType;
+              const id = `sheet-${url.split('gid=')[1].split('&')[0]}-${index}`;
+
               if (tipo === "MISSAO") {
-                missions.push(parts[1] || parts[0]);
+                allMissions.push(parts[1] || parts[0]);
               } else {
                 const isClassic = parts[11]?.toUpperCase() === 'TRUE' || parts[11]?.toUpperCase() === 'VERDADEIRO';
-                
-                posts.push({
-                  id: `sheet-${index}`,
+                allPosts.push({
+                  id: id,
                   title: parts[0],
                   content: parts[1],
                   imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
                   category: parts[3] || "GERAL",
                   categoryFull: parts[3],
                   subtitle: parts[4] || "",
-                  readingTime: parts[5] || "2 MIN",
+                  readingTime: parts[5] || (isAprofundarTab ? "8 MIN" : "2 MIN"),
                   bibleReference: parts[6] || "",
                   categoryType: tipo,
                   isClassic: isClassic,
                   tags: [parts[3]?.toLowerCase() || 'geral'],
                   status: 'published',
                   analogy: parts[8] || parts[9] || parts[10] ? {
-                    icon: parts[8] || "bolt",
-                    title: parts[9] || "A Analogia",
+                    icon: parts[8] || (isAprofundarTab ? "menu_book" : "bolt"),
+                    title: parts[9] || (isAprofundarTab ? "Versículo Chave" : "A Analogia"),
                     text: parts[10] || ""
                   } : undefined
                 });
               }
             });
-            setSheetPosts(posts);
-            setDynamicMissions(missions);
-          } catch (err) { console.error("Erro ao ler Planilha:", err); }
-        }
-      } catch (error) { console.error("Erro crítico:", error); } finally { setLoading(false); }
+          } catch (e) {
+            console.warn("Erro ao buscar aba da planilha:", url, e);
+          }
+        }));
+
+        setSheetPosts(allPosts);
+        setDynamicMissions(allMissions);
+      } catch (error) { 
+        console.error("Erro crítico na inicialização:", error); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     initializeApp();
   }, []);
@@ -115,7 +136,7 @@ const App: React.FC = () => {
     const currentProfile = userProfile || FALLBACK_DATA.profile;
     return {
       ...data,
-      expressos: sheetPosts.filter(p => p.categoryType === 'EXPRESSO' || (!p.categoryType && p.category !== 'APROFUNDAMENTO')),
+      expressos: sheetPosts.filter(p => p.categoryType === 'EXPRESSO'),
       sheetPosts: sheetPosts,
       profile: currentProfile
     };
@@ -152,7 +173,7 @@ const App: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-[#F1F5F9]">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Conectando Comunidade...</p>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Moendo Grãos Teológicos...</p>
       </div>
     </div>
   );
@@ -166,7 +187,6 @@ const App: React.FC = () => {
           <Route path="/expresso" element={<ExpressoPage content={mergedContent} readPostIds={readPostIds} />} />
           <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
           <Route path="/comunidade" element={<Comunidade content={mergedContent} />} />
-          {/* Fix: Pass sheetPosts to userPosts prop in Aprofundar route to resolve missing property error */}
           <Route path="/aprofundar" element={<Aprofundar content={mergedContent} readPostIds={readPostIds} userPosts={sheetPosts} />} />
           <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
           <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={sheetPosts} />} />

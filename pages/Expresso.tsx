@@ -89,15 +89,15 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
       <main className="px-6 space-y-12 mt-10 animate-in fade-in duration-700">
         <section>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-[40px] font-[900] font-display tracking-tight leading-none">Expresso</h1>
+            <h1 className="text-[40px] font-[900] font-display tracking-tight leading-none uppercase">Expresso</h1>
             <span className="material-symbols-outlined text-blue-600 text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
           </div>
-          <p className="text-slate-400 text-[16px] font-medium leading-tight max-w-[280px]">
+          <p className="text-slate-400 text-[16px] font-medium leading-tight max-w-[300px]">
             Doses intensas e rápidas para despertar sua fé no corre do dia a dia.
           </p>
         </section>
 
-        {/* Seção Em Alta */}
+        {/* Seção Alta Degustação */}
         <section>
           <div className="flex items-center gap-2 mb-6">
             <span className="material-symbols-outlined text-orange-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
