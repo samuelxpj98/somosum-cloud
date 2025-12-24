@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Expresso } from '../types';
 
 interface AprofundarProps {
@@ -15,43 +16,6 @@ export const FIXED_CATEGORIES = [
   { label: 'Teologia', icon: 'menu_book' },
   { label: 'Filosofia', icon: 'psychology' },
   { label: 'Cultura', icon: 'theater_comedy' },
-];
-
-export const DEEP_DIVE_DATA: Expresso[] = [
-  {
-    id: '1710000000006',
-    category: 'Evidências',
-    categoryFull: 'BIBLIOLOGIA • INERRÂNCIA',
-    title: 'A Autoridade Inerrante das Escrituras',
-    subtitle: 'Por que cremos que a Bíblia é a palavra de Deus inspirada e sem erros em seus originais?',
-    imageUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=800',
-    readingTime: '10 min',
-    content: 'A inerrância bíblica é a doutrina de que a Bíblia, em seus manuscritos originais, é isenta de erros em tudo o que afirma...',
-    tags: ['Bíblia', 'Evidências'],
-    bibleReference: '2 Timóteo 3:16',
-    analogy: {
-      icon: 'map',
-      title: 'O Mapa e o Terreno',
-      text: 'A Bíblia é o mapa infalível de Deus para a realidade.'
-    }
-  },
-  {
-    id: '1710000000005',
-    category: 'Fé e Ciência',
-    categoryFull: 'APOLOGÉTICA • COSMOLOGIA',
-    title: 'O Argumento Cosmológico',
-    subtitle: 'Entenda como a origem do universo aponta para um criador inteligente.',
-    imageUrl: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800',
-    readingTime: '5 min',
-    content: 'O argumento cosmológico Kalām postula que: 1. Tudo o que começa a existir tem uma causa...',
-    tags: ['Fé e Ciência'],
-    bibleReference: 'Gênesis 1:1',
-    analogy: {
-      icon: 'flare',
-      title: 'A Explosão Ordenada',
-      text: 'Se o universo gerou vida e ordem, deve haver uma mente por trás organizando os átomos.'
-    }
-  }
 ];
 
 // Card detalhado para a visão inicial de destaque
@@ -74,6 +38,11 @@ const DetailedArticleCard: React.FC<{ item: Expresso, isRead?: boolean, isDark?:
           <span className="text-slate-400 text-[10px] font-bold">• {item.readingTime}</span>
         </div>
         <h2 className={`text-xl font-black font-display mb-2 leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h2>
+        {item.subtitle && (
+          <p className="text-xs font-[800] mb-4 line-clamp-2 leading-relaxed text-blue-600">
+            {item.subtitle}
+          </p>
+        )}
         <button onClick={() => navigate(`/aprofundar/${item.id}`)} className="w-full h-12 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
           Ler Artigo
         </button>
@@ -114,9 +83,9 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
   const isDark = content.profile.isDarkMode;
 
   const allItems = useMemo(() => {
-    const publishedUser = userPosts.filter(p => (p.category === 'APROFUNDAMENTO' || p.categoryType === 'APROFUNDAR') && p.status === 'published');
+    const publishedUser = userPosts.filter(p => (p.categoryType === 'APROFUNDAR') && p.status === 'published');
     const sheetAprofs = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
-    return [...publishedUser, ...sheetAprofs, ...DEEP_DIVE_DATA].sort((a, b) => b.id.localeCompare(a.id));
+    return [...publishedUser, ...sheetAprofs].sort((a, b) => b.id.localeCompare(a.id));
   }, [userPosts, content.sheetPosts]);
 
   return (
@@ -136,7 +105,12 @@ const Aprofundar: React.FC<AprofundarProps> = ({ userPosts, readPostIds, content
       </header>
 
       <main className="px-6 pt-8">
-        {showAll ? (
+        {allItems.length === 0 ? (
+          <div className="py-20 text-center opacity-30">
+            <span className="material-symbols-outlined text-6xl mb-4">inventory_2</span>
+            <p className="text-sm font-black uppercase">Nenhum estudo profundo encontrado.</p>
+          </div>
+        ) : showAll ? (
           <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
             {allItems.map(item => (
               <SmallArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} />

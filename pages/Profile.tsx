@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { UserProfile, Expresso } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { DEEP_DIVE_DATA } from './Aprofundar';
+// Removed DEEP_DIVE_DATA as it is no longer exported from Aprofundar.tsx
 
 interface ProfileProps {
   profile: UserProfile;
@@ -46,7 +47,8 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
   const isDark = profile.isDarkMode;
 
   const savedPosts = useMemo(() => {
-    const allAprofs = [...DEEP_DIVE_DATA, ...userPosts];
+    // Relying on userPosts prop which is passed as the combination of sheet and user-created posts
+    const allAprofs = userPosts;
     return allAprofs.filter(post => profile.savedPostIds.includes(post.id));
   }, [profile.savedPostIds, userPosts]);
 

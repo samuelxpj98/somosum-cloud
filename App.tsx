@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppContent, Comment, Expresso, UserProfile } from './types';
@@ -10,7 +11,6 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 
-// Fallback de segurança para evitar tela de loading infinita
 const FALLBACK_DATA: AppContent = {
   branding: { appName: "SOMOSUM", region: "GOIÁS", motto: "Apologética Jovem" },
   landing: { 
@@ -48,7 +48,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // 1. Carrega Perfil
         const savedProfile = localStorage.getItem('user_profile');
         let initialProfile: UserProfile;
         if (savedProfile) {
@@ -60,28 +59,20 @@ const App: React.FC = () => {
         }
         setUserProfile(initialProfile);
 
-        // 2. Carrega Comentários e Posts Locais
-        const savedComments = localStorage.getItem('local_comments');
-        if (savedComments) setGlobalComments(JSON.parse(savedComments));
-
         const savedUserPosts = localStorage.getItem('user_created_posts');
         if (savedUserPosts) setUserCreatedPosts(JSON.parse(savedUserPosts));
         
         const savedReadPosts = localStorage.getItem('read_posts');
         if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
 
-        // 3. Tenta carregar conteúdo atualizado do JSON
         try {
           const response = await fetch('conteudo.json');
           if (response.ok) {
             const json = await response.json();
-            setData(json);
+            setData({ ...json, expressos: [] });
           }
-        } catch (e) { 
-          console.warn("Usando dados de fallback: conteudo.json não acessível."); 
-        }
+        } catch (e) { console.warn("Usando fallback para branding."); }
 
-        // 4. Carrega Planilha Google
         if (GOOGLE_SHEETS_TSV_URL) {
           try {
             const sheetRes = await fetch(GOOGLE_SHEETS_TSV_URL);
@@ -89,65 +80,59 @@ const App: React.FC = () => {
             const lines = tsvText.split('\n').slice(1);
             const posts: Expresso[] = [];
             const missions: string[] = [];
+
             lines.forEach((line, index) => {
-              const parts = line.split('\t');
-              if (!parts[0] || parts[0].trim() === "") return;
-              const type = parts[7]?.trim()?.toUpperCase() || "EXPRESSO";
-              const isClassicVal = parts[11]?.trim()?.toUpperCase();
+              const parts = line.split('\t').map(p => p.trim());
+              if (!parts[0]) return;
+
+              const tipo = parts[7]?.toUpperCase() || "EXPRESSO";
               
-              if (type === "MISSAO") {
-                missions.push(parts[1]?.trim() || parts[0]?.trim());
+              if (tipo === "MISSAO") {
+                missions.push(parts[1] || parts[0]);
               } else {
+                const isClassic = parts[11]?.toUpperCase() === 'TRUE' || parts[11]?.toUpperCase() === 'VERDADEIRO';
+                
                 posts.push({
                   id: `sheet-${index}`,
-                  title: parts[0]?.trim(),
-                  content: parts[1]?.trim(),
-                  imageUrl: parts[2]?.trim() || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
-                  category: parts[3]?.trim() || "GERAL",
-                  categoryFull: parts[3]?.trim(),
-                  subtitle: parts[4]?.trim() || "",
-                  readingTime: parts[5]?.trim() || "2 MIN",
-                  bibleReference: parts[6]?.trim() || "",
-                  categoryType: type,
-                  isClassic: isClassicVal === 'TRUE' || isClassicVal === 'VERDADEIRO',
+                  title: parts[0],
+                  content: parts[1],
+                  imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
+                  category: parts[3] || "GERAL",
+                  categoryFull: parts[3],
+                  subtitle: parts[4] || "",
+                  readingTime: parts[5] || "2 MIN",
+                  bibleReference: parts[6] || "",
+                  categoryType: tipo,
+                  isClassic: isClassic,
                   tags: [parts[3]?.toLowerCase() || 'geral'],
                   status: 'published',
-                  analogy: parts[8] ? {
-                    icon: parts[8]?.trim() || "bolt",
-                    title: parts[9]?.trim() || "Analogia",
-                    text: parts[10]?.trim() || ""
+                  analogy: parts[8] || parts[9] || parts[10] ? {
+                    icon: parts[8] || "bolt",
+                    title: parts[9] || "A Analogia",
+                    text: parts[10] || ""
                   } : undefined
                 });
               }
             });
             setSheetPosts(posts);
             setDynamicMissions(missions);
-          } catch (err) { console.error("Erro Planilha:", err); }
+          } catch (err) { console.error("Erro ao ler Planilha:", err); }
         }
-      } catch (error) { 
-        console.error("Erro crítico na inicialização:", error); 
-      } finally { 
-        setLoading(false); 
-      }
+      } catch (error) { console.error("Erro crítico:", error); } finally { setLoading(false); }
     };
     initializeApp();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('local_comments', JSON.stringify(globalComments));
-  }, [globalComments]);
-
   const mergedContent = useMemo(() => {
     const currentProfile = userProfile || FALLBACK_DATA.profile;
-    const expressosList = [
-      ...userCreatedPosts.filter(p => p.status === 'published' && p.categoryType !== 'APROFUNDAR'),
-      ...sheetPosts.filter(p => p.categoryType === 'EXPRESSO'),
-      ...(data?.expressos || [])
+    const allPosts = [
+      ...userCreatedPosts.filter(p => p.status === 'published'),
+      ...sheetPosts
     ];
 
     return {
       ...data,
-      expressos: expressosList,
+      expressos: allPosts.filter(p => p.categoryType === 'EXPRESSO' || (!p.categoryType && p.category !== 'APROFUNDAMENTO')),
       sheetPosts: sheetPosts,
       profile: currentProfile
     };
@@ -172,16 +157,6 @@ const App: React.FC = () => {
     updateProfile({ ...userProfile, likedPostIds: newLikedIds });
   };
 
-  const handleAddComment = (newComment: Comment) => {
-    setGlobalComments(prev => [newComment, ...prev]);
-  };
-
-  const handleLikeComment = (commentId: string) => {
-    setGlobalComments(prev => prev.map(c => 
-      c.id === commentId ? { ...c, likes: c.likes + 1, isLiked: true } : c
-    ));
-  };
-
   const markAsRead = (id: string) => {
     if (!readPostIds.includes(id)) {
       const newReadPosts = [...readPostIds, id];
@@ -190,12 +165,11 @@ const App: React.FC = () => {
     }
   };
 
-  // Removido o bloqueio rígido do mergedContent para evitar hang
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Iniciando SomosUm...</p>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sincronizando com a Nuvem...</p>
       </div>
     </div>
   );
@@ -206,11 +180,11 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landing content={mergedContent} />} />
           <Route path="/home" element={<Home content={mergedContent} missions={dynamicMissions} />} />
-          <Route path="/expresso" element={<ExpressoPage content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} readPostIds={readPostIds} />} />
-          <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} markAsRead={markAsRead} readPostIds={readPostIds} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
+          <Route path="/expresso" element={<ExpressoPage content={mergedContent} comments={globalComments} onAddComment={() => {}} onLikeComment={() => {}} readPostIds={readPostIds} />} />
+          <Route path="/expresso/:id" element={<ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
           <Route path="/aprofundar" element={<Aprofundar content={mergedContent} userPosts={userCreatedPosts} readPostIds={readPostIds} />} />
-          <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} comments={globalComments} onAddComment={handleAddComment} onLikeComment={handleLikeComment} markAsRead={markAsRead} readPostIds={readPostIds} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
-          <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={userCreatedPosts} />} />
+          <Route path="/aprofundar/:id" element={<AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} />} />
+          <Route path="/profile" element={<Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={[...sheetPosts, ...userCreatedPosts]} />} />
         </Routes>
         <BottomNav isDarkMode={mergedContent.profile.isDarkMode} />
       </div>

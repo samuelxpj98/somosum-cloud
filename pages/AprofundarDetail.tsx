@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
-import AIApologist from '../components/AIApologist';
 import { commentsService } from '../lib/firebase';
 
 const CommentItem: React.FC<{
@@ -40,7 +39,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
   const [realtimeComments, setRealtimeComments] = useState<any[]>([]);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [showAI, setShowAI] = useState(false);
 
   const displayItem = useMemo(() => {
     return content.expressos.find((e: any) => e.id === id) || (content as any).sheetPosts?.find((e: any) => e.id === id);
@@ -77,27 +75,62 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <div className="bg-blue-600/10 px-4 py-2 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-widest">
-          {displayItem.readingTime} LEITURA
+          {displayItem.readingTime}
         </div>
       </header>
 
       <main className="px-6 py-4">
-        <div className="mb-8 text-center flex flex-col items-center gap-3">
+        {/* Título e Subtítulo (Subtítulo agora é Azul) */}
+        <div className="mb-8 text-center flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
              {displayItem.categoryFull || displayItem.category}
            </span>
            <h1 className={`text-[34px] font-[900] font-display leading-[1.1] tracking-tighter mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
              {displayItem.title}
            </h1>
+           {displayItem.subtitle && (
+             <p className="text-[16px] font-[800] max-w-[320px] leading-tight italic text-blue-600">
+               {displayItem.subtitle}
+             </p>
+           )}
         </div>
 
-        <div className="rounded-[32px] overflow-hidden shadow-xl mb-10 border border-slate-100">
+        <div className="rounded-[32px] overflow-hidden shadow-xl mb-10 border border-slate-100 animate-in zoom-in-95 duration-700">
           <img src={displayItem.imageUrl} alt={displayItem.title} className="w-full h-72 object-cover" />
         </div>
 
-        <div className={`whitespace-pre-line mb-12 text-[17px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
+        {/* Card de Analogia / Contexto (Antes do Texto) */}
+        {displayItem.analogy && displayItem.analogy.text && (
+          <div className={`mb-10 p-7 rounded-[40px] border-2 border-dashed relative animate-in slide-in-from-right-4 duration-700 ${isDark ? 'bg-indigo-600/5 border-indigo-500/20' : 'bg-slate-50 border-slate-200'}`}>
+            <div className="absolute -top-5 left-8 size-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+              <span className="material-symbols-outlined text-[20px]">{displayItem.analogy.icon || 'menu_book'}</span>
+            </div>
+            <h4 className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.25em] mb-4 mt-1">{displayItem.analogy.title || 'Analogia do Estudo'}</h4>
+            <p className={`text-lg font-bold leading-relaxed ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+              {displayItem.analogy.text}
+            </p>
+          </div>
+        )}
+
+        {/* Texto do Artigo */}
+        <div className={`whitespace-pre-line mb-8 text-[17px] leading-relaxed animate-in fade-in duration-1000 ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
           {displayItem.content.replace(/\\n/g, '\n').trim()}
         </div>
+
+        {/* PILAR DE FÉ (Versículo) - APÓS O TEXTO */}
+        {displayItem.bibleReference && (
+          <div className={`mb-12 p-8 rounded-[40px] border-2 border-indigo-100 relative transition-all shadow-sm ${isDark ? 'bg-indigo-900/10 border-indigo-800/30' : 'bg-white'}`}>
+            <div className="flex items-center gap-3 mb-4">
+               <div className="size-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                 <span className="material-symbols-outlined text-[18px]">menu_book</span>
+               </div>
+               <h4 className="text-indigo-600 font-black text-[11px] uppercase tracking-[0.25em]">Fundamento Bíblico</h4>
+            </div>
+            <p className={`text-xl font-black font-display italic leading-tight ${isDark ? 'text-indigo-100' : 'text-indigo-900'}`}>
+              "{displayItem.bibleReference}"
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4 mb-12">
           <button onClick={() => id && onToggleLike(id)} className={`flex-1 py-4 rounded-[20px] border flex flex-col items-center gap-1 active:scale-95 transition-all ${isLiked ? 'text-red-500 border-red-100 bg-red-50/10' : (isDark ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-white border-slate-100 text-slate-400')}`}>
@@ -132,19 +165,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           <span className="material-symbols-outlined text-[32px]">check_circle</span>
         </div>
       </main>
-
-      <button onClick={() => setShowAI(true)} className="fixed bottom-28 right-6 size-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
-        <span className="material-symbols-outlined text-[28px]">smart_toy</span>
-      </button>
-
-      {showAI && (
-        <AIApologist 
-          articleTitle={displayItem.title}
-          articleContent={displayItem.content}
-          isDarkMode={isDark}
-          onClose={() => setShowAI(false)}
-        />
-      )}
     </div>
   );
 };
