@@ -5,6 +5,12 @@ import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
 
+// Configuração opcional do marked para garantir quebras de linha automáticas
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
 const CommentItem: React.FC<{
   comment: any;
   allComments: any[];
@@ -74,7 +80,8 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
 
   const processedContent = useMemo(() => {
     if (!item?.content) return '';
-    const raw = item.content.replace(/\\n/g, '\n');
+    // Converte literais \n e limpa espaços extras para Markdown
+    const raw = item.content.replace(/\\n/g, '\n').trim();
     return marked.parse(raw);
   }, [item?.content]);
 
@@ -118,7 +125,7 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           )}
         </div>
 
-        {/* BLOCO DE ANALOGIA - AGORA ANTES DO TEXTO PRINCIPAL */}
+        {/* BLOCO DE ANALOGIA */}
         {item.analogy && item.analogy.text && (
           <div className={`mb-10 p-8 rounded-[32px] border transition-all animate-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-slate-50 border-slate-100'}`}>
             <div className="flex items-center gap-4 mb-4">
@@ -133,11 +140,12 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           </div>
         )}
 
-        {/* Markdown Content Area */}
+        {/* Markdown Content Area - Adicionado prose-h2 e prose-strong específicos */}
         <div 
-          className={`prose prose-slate max-w-none mb-10 text-[17px] leading-[1.7] animate-in fade-in duration-1000 
-            ${isDark ? 'prose-invert text-slate-400 prose-p:text-slate-400' : 'text-[#334155] prose-p:text-[#334155]'}
-            prose-p:mb-6 prose-strong:text-blue-600 dark:prose-strong:text-blue-400
+          className={`prose prose-slate max-w-none mb-10 animate-in fade-in duration-1000 
+            ${isDark ? 'prose-invert prose-p:text-slate-400 prose-headings:text-white' : 'prose-p:text-[#334155] prose-headings:text-slate-900'}
+            prose-headings:font-black prose-headings:tracking-tighter prose-p:text-[17px] prose-p:leading-[1.7] prose-p:mb-6 
+            prose-strong:text-blue-600 dark:prose-strong:text-blue-400
           `}
           dangerouslySetInnerHTML={{ __html: processedContent }}
         />

@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SomosUm Goiás</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Adicionado plugin typography na URL do script -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Lora:ital,wght@1,400&display=swap" rel="stylesheet">
@@ -43,13 +44,11 @@
         line-height: 1.6;
       }
 
-      /* Títulos e Labels usam Inter Bold */
       .font-display { 
         font-family: 'Inter', sans-serif; 
         font-weight: 700; 
       }
       
-      /* Citações usam Lora Italic */
       .font-serif { 
         font-family: 'Lora', serif; 
         font-style: italic; 
@@ -60,6 +59,13 @@
 
       .soft-shadow {
         box-shadow: 0 4px 20px -2px rgba(30, 41, 59, 0.05);
+      }
+
+      /* Ajuste global para garantir que o Markdown tenha cores consistentes no dark mode */
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose strong {
+        color: inherit;
+        font-weight: 800;
+        letter-spacing: -0.025em;
       }
     </style>
     <script type="importmap">
