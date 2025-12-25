@@ -1,3 +1,4 @@
+
 export interface Comment {
   id: string;
   userName: string;
@@ -16,13 +17,6 @@ export interface ResourceLink {
   description: string;
   type: 'book' | 'video' | 'link';
   url: string;
-}
-
-export interface CommunityPost {
-  title: string;
-  content: string;
-  imageUrl?: string;
-  author?: string;
 }
 
 export interface Expresso {
@@ -50,13 +44,17 @@ export interface Expresso {
 }
 
 export interface UserProfile {
+  id: string;
   name: string;
   email: string;
   avatarUrl: string;
   church: string;
+  whatsapp: string;
   education: string;
-  course?: string;
+  isPastor: boolean;
   isDarkMode: boolean;
+  isProfileComplete: boolean;
+  role: 'user' | 'admin';
   savedPostIds: string[];
   likedPostIds: string[];
   stats: {

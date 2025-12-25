@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, push, set, update, increment, get } from "firebase/database";
+import { getDatabase, ref, onValue, push, set, update, increment, query, limitToLast, orderByChild, get, equalTo } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
@@ -16,10 +16,39 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
+export const userService = {
+  saveProfile: async (userId: string, profileData: any) => {
+    const userRef = ref(db, `users/${userId}`);
+    return update(userRef, {
+      ...profileData,
+      updatedAt: Date.now()
+    });
+  },
+  getProfile: async (userId: string) => {
+    const userRef = ref(db, `users/${userId}`);
+    const snapshot = await get(userRef);
+    return snapshot.val();
+  },
+  findUserByEmail: async (email: string) => {
+    const usersRef = ref(db, 'users');
+    const emailQuery = query(usersRef, orderByChild('email'), equalTo(email.toLowerCase().trim()));
+    const snapshot = await get(emailQuery);
+    
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      const userId = Object.keys(userData)[0];
+      return { id: userId, ...userData[userId] };
+    }
+    return null;
+  }
+};
+
 export const commentsService = {
   subscribeToComments: (postId: string, callback: (comments: any[]) => void) => {
     const commentsRef = ref(db, 'conversas/' + postId);
-    return onValue(commentsRef, (snapshot) => {
+    const q = query(commentsRef, limitToLast(50));
+    
+    return onValue(q, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const commentsList = Object.entries(data).map(([key, value]: [string, any]) => ({
@@ -50,7 +79,9 @@ export const commentsService = {
           });
         });
       });
-      callback(flattened);
+      
+      const sorted = flattened.sort((a, b) => (b.hora || 0) - (a.hora || 0)).slice(0, 50);
+      callback(sorted);
     });
   },
 
@@ -59,17 +90,6 @@ export const commentsService = {
     const newCommentRef = push(commentsRef);
     return set(newCommentRef, {
       ...comment,
-      likes: 0,
-      hora: Date.now()
-    });
-  },
-
-  addReply: async (postId: string, parentId: string, reply: any) => {
-    const commentsRef = ref(db, `conversas/${postId}`);
-    const newCommentRef = push(commentsRef);
-    return set(newCommentRef, {
-      ...reply,
-      parentId,
       likes: 0,
       hora: Date.now()
     });

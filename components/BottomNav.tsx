@@ -4,12 +4,14 @@ import { NavLink, useLocation } from 'react-router-dom';
 
 interface BottomNavProps {
   isDarkMode?: boolean;
+  profileComplete?: boolean;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ isDarkMode }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ isDarkMode, profileComplete }) => {
   const location = useLocation();
-  const hidePaths = ['/'];
-  if (hidePaths.includes(location.pathname)) return null;
+  const hidePaths = ['/', '/onboarding'];
+  
+  if (hidePaths.includes(location.pathname) || !profileComplete) return null;
 
   return (
     <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto h-24 border-t flex justify-around items-center px-2 pb-2 z-50 transition-all duration-300 ${isDarkMode ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-100'} backdrop-blur-md`}>
