@@ -8,41 +8,41 @@ interface AppGuideProps {
 
 const steps = [
   {
-    title: "BEM-VINDO AO ECOSSISTEMA",
-    subtitle: "SomosUm Goiás",
-    description: "Este não é apenas um app, é sua central de inteligência para uma fé fundamentada na razão. Aqui, cada detalhe foi moído para sua edificação.",
+    title: "SEJA BEM-VINDO",
+    subtitle: "somosum Goiás",
+    description: "Uma curadoria personalizada sobre temas em alta, perguntas comuns, artigos acadêmicos e muito mais. Se você busca respostas inteligentes para perguntas complexas, encontrou o seu lugar.",
     icon: "cognition",
     color: "bg-blue-600",
     image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=600"
   },
   {
     title: "ALTA DEGUSTAÇÃO",
-    subtitle: "O Expresso",
-    description: "Doses rápidas para dúvidas intensas. O algoritmo prioriza o que é novo e viral. Ideal para aquele insight entre uma aula e outra.",
+    subtitle: "o expresso",
+    description: "Doses rápidas para dúvidas intensas. Quando o dia já começa no 12 e você não tem muito tempo, mas não pode deixar de tomar um expresso. Já posso preparar pra viagem?",
     icon: "bolt",
     color: "bg-orange-500",
     image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600"
   },
   {
     title: "MOAGEM FINA",
-    subtitle: "O Aprofundar",
-    description: "Estudos densos e teológicos. Aqui a recência importa menos que a autoridade. Fontes acadêmicas e bíblicas fazem você subir no ranking.",
+    subtitle: "o aprofundar",
+    description: "Aqui, o tempo desacelera. É o espaço para quem não se contenta com a superfície e deseja construir uma cosmovisão sólida, pautada em evidências e tradição intelectual.",
     icon: "menu_book",
     color: "bg-indigo-600",
     image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=600"
   },
   {
     title: "PURO GRÃO",
-    subtitle: "A Comunidade",
-    description: "Onde o diálogo acontece. O algoritmo valoriza a profundidade das respostas (Dialética). Quanto melhor o debate, maior o seu score.",
+    subtitle: "a comunidade",
+    description: "Comente, questione e interaja com outros jovens cristãos. Priorizamos o debate saudável: aquele que edifica, confronta ideias com respeito e fortalece o corpo de Cristo.",
     icon: "forum",
     color: "bg-emerald-600",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=600"
   },
   {
     title: "CURADORIA INTELIGENTE",
-    subtitle: "O Algoritmo",
-    description: "Nossa IA monitora o engajamento e a qualidade das fontes. Os 3 primeiros lugares (Ouro, Prata, Bronze) são o selo de relevância da nossa geração.",
+    subtitle: "o algoritmo",
+    description: "Expressos: Os mais curtidos ditam o ritmo.\nAprofundar: Os com maior debate permanecem em alta.\nComentários: Os comentários com mais interações ficam sempre no topo.",
     icon: "analytics",
     color: "bg-amber-500",
     image: "https://images.unsplash.com/photo-1551288049-bbbda536339a?auto=format&fit=crop&q=80&w=600"
@@ -84,9 +84,9 @@ const AppGuide: React.FC<AppGuideProps> = ({ onClose, isDark }) => {
         </div>
 
         <div className="p-8 pb-10">
-          <p className={`text-[15px] leading-relaxed mb-10 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <div className={`text-[14px] leading-relaxed mb-10 font-medium whitespace-pre-line ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             {step.description}
-          </p>
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="flex gap-1.5">
