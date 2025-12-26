@@ -7,12 +7,31 @@ import { commentsService } from '../lib/firebase';
 
 export const FIXED_CATEGORIES = [
   { label: 'Todos', icon: 'grid_view' },
-  { label: 'Razão & Ciência', icon: 'science' },
-  { label: 'Evidências', icon: 'history_edu' },
-  { label: 'Vida & Dilemas', icon: 'psychology' },
-  { label: 'Identidade', icon: 'fingerprint' },
-  { label: 'Fé & Cultura', icon: 'theater_comedy' },
+  { label: 'Fé e Ciência', icon: 'science' },
+  { label: 'História', icon: 'history_edu' },
+  { label: 'Filosofia', icon: 'psychology' },
+  { label: 'Teologia', icon: 'church' },
+  { label: 'Cultura', icon: 'theater_comedy' },
 ];
+
+const calculateLValue = (text: string): number => {
+  if (!text) return 0;
+  const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+  const bibleRefRegex = /(?:[123]\s)?(?:Gên|Êxo|Lev|Nâm|Deu|Jos|Juí|Rut|1Sm|2Sm|1Rs|2Rs|1Cr|2Cr|Esd|Nee|Est|Jó|Sal|Pro|Ecl|Can|Isa|Jer|Lam|Eze|Dan|Ose|Joe|Amó|Oba|Jon|Miq|Naú|Hab|Sof|Age|Zac|Mal|Mat|Mar|Luc|João|Atos|Rom|1Co|2Co|Gál|Efe|Fil|Col|1Te|2Te|1Ti|2Ti|Tit|Flm|Heb|Tia|1Pe|2Pe|1Jo|2Jo|3Jo|Jud|Apo)\.?\s\d+/gi;
+  const hasBibleRef = bibleRefRegex.test(text);
+
+  if (urls.length === 0 && !hasBibleRef) return 0;
+  if (hasBibleRef) return 3;
+
+  let maxL = 1;
+  urls.forEach(url => {
+    const u = url.toLowerCase();
+    if (u.includes('.edu') || u.includes('.org') || u.includes('journal') || u.includes('museum')) maxL = 3;
+    else if (u.includes('news') || u.includes('somosum') || u.includes('portal')) maxL = Math.max(maxL, 2);
+    else if (u.includes('instagram.com') || u.includes('tiktok.com')) maxL = Math.max(maxL, 0);
+  });
+  return maxL;
+};
 
 const getCategoryColor = (category: string) => {
   const cat = category?.toUpperCase() || '';
@@ -41,7 +60,6 @@ const DetailedArticleCard: React.FC<{
       <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
       
-      {/* Ranking Badge */}
       {rank !== undefined && (
         <div className="absolute top-6 left-6 z-30 bg-orange-500 text-white size-10 rounded-2xl flex items-center justify-center font-black text-lg shadow-xl shadow-orange-600/40 border border-white/20 animate-in zoom-in-50 duration-500">
           {rank}
@@ -89,14 +107,23 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
 
   const { trending, recent } = useMemo(() => {
     const studies = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
+    const now = Date.now();
     
     const scored = studies.map(item => {
-      const commentCount = allComments.filter(c => c.postId === item.id).length;
-      return { ...item, engagement: commentCount };
+      const postComments = allComments.filter(c => c.postId === item.id);
+      const C = postComments.length;
+      const L = calculateLValue(item.content);
+      const V = 0;
+      const T = Math.max(1, (now - (item.hora || now - 86400000)) / 3600000);
+      
+      // Fórmula APROFUNDAR: R = ((C * 5) + (L * 5) + (V * 1)) / T^1.3
+      const score = ((C * 5) + (L * 5) + (V * 1)) / Math.pow(T, 1.3);
+      
+      return { ...item, score };
     });
 
-    const sortedByEngagement = [...scored].sort((a, b) => b.engagement - a.engagement);
-    const trendingItems = sortedByEngagement.slice(0, 4);
+    const sortedByScore = [...scored].sort((a, b) => b.score - a.score);
+    const trendingItems = sortedByScore.slice(0, 4);
     const trendingIds = trendingItems.map(i => i.id);
     
     const recentItems = scored
@@ -124,7 +151,6 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
           </p>
         </section>
 
-        {/* Estudos Alta Moagem Fina */}
         <section>
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
@@ -132,7 +158,7 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
               <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
             </div>
             <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
-              Artigos com mais reflexões, curtidas e comentários.
+              Autoridade intelectual baseada em referências bíblicas e históricas.
             </p>
           </div>
           <div className="space-y-6">
@@ -142,7 +168,6 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
           </div>
         </section>
 
-        {/* Estudos Recentes */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -164,7 +189,7 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
                 <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                  <span className={`text-[9px] font-black ${getCategoryColor(item.categoryFull || item.category).replace('bg-', 'text-')} uppercase tracking-widest mb-1 block`}>
+                  <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
                     {item.category}
                   </span>
                   <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2">{item.title}</h4>

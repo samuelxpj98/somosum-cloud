@@ -1,15 +1,15 @@
 
 export interface Comment {
   id: string;
-  userName: string;
+  usuario: string;
   userAvatar: string;
-  userInfo: string;
-  text: string;
+  church: string;
+  texto: string;
   likes: number;
-  time: string;
+  hora: number;
   postId?: string;
   parentId?: string;
-  isLiked?: boolean;
+  postTitle?: string;
 }
 
 export interface ResourceLink {
@@ -57,6 +57,10 @@ export interface UserProfile {
   role: 'user' | 'admin';
   savedPostIds: string[];
   likedPostIds: string[];
+  likedCommentIds: string[]; // Controle de likes em comentários
+  readPostIds: string[];
+  loginCount: number;
+  lastLoginDate?: number;
   stats: {
     daysInRow: number;
     savedPosts: number;

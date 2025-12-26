@@ -49,7 +49,20 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
 
   return (
     <div className={`min-h-screen flex flex-col p-8 transition-colors duration-500 ${isDark ? 'bg-slate-950 text-white' : 'bg-[#f8fafc] text-slate-900'}`}>
-      <div className="mt-8 mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
+      
+      {/* Botão de Voltar no Topo */}
+      <header className="absolute top-6 left-6 z-50">
+        <button 
+          onClick={() => navigate('/')}
+          className={`size-10 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+            isDark ? 'bg-slate-900 border border-slate-800 text-white' : 'bg-white border border-slate-100 shadow-sm text-slate-600'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+        </button>
+      </header>
+
+      <div className="mt-12 mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="inline-flex items-center justify-center size-14 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-600/30 mb-5">
           <span className="material-symbols-outlined text-[28px]">person_add</span>
         </div>
@@ -77,7 +90,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
           />
         </div>
 
-        {/* Destaque do Pastor (Substituindo o botão lateral por um seletor de status) */}
+        {/* Destaque do Pastor */}
         <div 
           onClick={() => setIsPastor(!isPastor)}
           className={`mx-1 p-4 rounded-[24px] border-2 transition-all cursor-pointer flex items-center gap-4 ${

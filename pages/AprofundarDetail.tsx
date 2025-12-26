@@ -5,7 +5,6 @@ import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
 
-// Configuração do marked
 marked.setOptions({
   breaks: true,
   gfm: true
@@ -18,43 +17,124 @@ const CommentItem: React.FC<{
   isDark?: boolean;
   depth?: number;
   profile: any;
-}> = ({ comment, allComments, postId, isDark, depth = 0, profile }) => {
-  const replies = allComments.filter(c => c.parentId === comment.id);
-  const handleLike = () => commentsService.likeComment(postId, comment.id);
+  onLikeComment: (postId: string, commentId: string) => void;
+}> = ({ comment, allComments, postId, isDark, depth = 0, profile, onLikeComment }) => {
+  const [isReplying, setIsReplying] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  
+  const replies = useMemo(() => allComments.filter(c => c.parentId === comment.id), [allComments, comment.id]);
+  const alreadyLiked = useMemo(() => (profile.likedCommentIds || []).includes(comment.id), [profile.likedCommentIds, comment.id]);
+
+  const handleSendReply = async () => {
+    if (!replyText.trim()) return;
+    await commentsService.addComment(postId, {
+      usuario: profile.name || "Explorador",
+      texto: replyText,
+      userAvatar: profile.avatarUrl,
+      church: profile.church,
+      parentId: comment.id,
+      postTitle: comment.postTitle || "Comentário"
+    });
+    setReplyText('');
+    setIsReplying(false);
+    setShowReplies(true);
+  };
 
   return (
-    <div className={`transition-all animate-in fade-in slide-in-from-left-4 duration-300 ${depth > 0 ? 'ml-6 mt-3 border-l-2 border-blue-100 pl-4' : 'mt-4'}`}>
-      <div className={`p-5 rounded-[24px] border soft-shadow transition-all ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
+    <div className={`transition-all animate-in fade-in slide-in-from-left-4 duration-300 ${depth > 0 ? 'ml-4 mt-2 border-l-2 border-slate-200 dark:border-slate-700 pl-4' : 'mt-4'}`}>
+      <div className={`p-4 rounded-[24px] border soft-shadow transition-all ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
         <div className="flex gap-3">
-          <div className="size-10 rounded-full bg-[#1E293B] flex items-center justify-center text-white font-bold text-[10px] shrink-0 overflow-hidden">
+          <div className="size-8 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-[8px] shrink-0 overflow-hidden">
             {comment.userAvatar ? <img src={comment.userAvatar} className="size-full object-cover" /> : comment.usuario?.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <h5 className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-[#1E293B]'}`}>{comment.usuario}</h5>
-            <p className="text-[10px] text-[#3B82F6] font-bold uppercase tracking-widest mb-2">{comment.church || "SomosUm"}</p>
-            <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-[#334155]'}`}>{comment.texto}</p>
-            <div className="flex items-center gap-4 mt-3">
-              <button onClick={handleLike} className="flex items-center gap-1 text-slate-400 active:scale-90 transition-transform">
-                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: comment.likes > 0 ? "'FILL' 1" : "" }}>thumb_up</span>
-                <span className="text-[10px] font-bold">{comment.likes || 0}</span>
+            <div className="flex justify-between items-start">
+               <div className="flex items-center gap-2 flex-wrap min-w-0">
+                 <h5 className={`text-[13px] font-bold truncate ${isDark ? 'text-white' : 'text-[#1E293B]'}`}>{comment.usuario}</h5>
+                 <span className="text-[10px] text-slate-300 font-bold">•</span>
+                 <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest truncate">{comment.church || "SomosUm"}</p>
+               </div>
+               <span className="text-[8px] text-slate-300 font-bold shrink-0 ml-2">{comment.time}</span>
+            </div>
+            <p className={`text-[13px] leading-relaxed mt-1 ${isDark ? 'text-slate-300' : 'text-[#334155]'}`}>{comment.texto}</p>
+            
+            <div className="flex items-center gap-4 mt-2">
+              <button 
+                onClick={() => !alreadyLiked && onLikeComment(postId, comment.id)} 
+                className={`flex items-center gap-1 active:scale-90 transition-all ${alreadyLiked ? 'text-blue-500' : 'text-slate-400'}`}
+              >
+                <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: alreadyLiked ? "'FILL' 1" : "" }}>thumb_up</span>
+                <span className="text-[9px] font-bold">{comment.likes || 0}</span>
+              </button>
+              <button onClick={() => setIsReplying(!isReplying)} className={`text-[9px] font-black uppercase tracking-widest ${isReplying ? 'text-blue-500' : 'text-slate-400'}`}>
+                Responder
               </button>
             </div>
+
+            {isReplying && (
+              <div className="mt-3 animate-in slide-in-from-top-2 duration-200">
+                <textarea 
+                  autoFocus
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  placeholder="Sua resposta..."
+                  className={`w-full p-3 rounded-xl border text-[12px] min-h-[60px] focus:ring-2 focus:ring-blue-500/20 outline-none ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
+                />
+                <div className="flex gap-2 mt-2">
+                  <button onClick={handleSendReply} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Enviar</button>
+                  <button onClick={() => setIsReplying(false)} className="px-4 py-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">Cancelar</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      {replies.map(reply => (
-        <CommentItem key={reply.id} comment={reply} allComments={allComments} postId={postId} isDark={isDark} depth={depth + 1} profile={profile} />
-      ))}
+
+      {replies.length > 0 && (
+        <div className="mt-1">
+          {!showReplies ? (
+            <button 
+              onClick={() => setShowReplies(true)}
+              className="ml-4 flex items-center gap-1.5 py-1 text-[9px] font-black text-blue-500 uppercase tracking-widest active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-[14px]">subdirectory_arrow_right</span>
+              Ver {replies.length} {replies.length === 1 ? 'resposta' : 'respostas'}
+            </button>
+          ) : (
+            <div className="animate-in slide-in-from-top-2 duration-300">
+              {replies.map(reply => (
+                <CommentItem 
+                  key={reply.id} 
+                  comment={reply} 
+                  allComments={allComments} 
+                  postId={postId} 
+                  isDark={isDark} 
+                  depth={depth + 1} 
+                  profile={profile}
+                  onLikeComment={onLikeComment}
+                />
+              ))}
+              <button 
+                onClick={() => setShowReplies(false)}
+                className="ml-4 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest active:scale-95 transition-all"
+              >
+                Recolher
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
-const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onToggleLike }) => {
+const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onToggleLike, onLikeComment }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isDark = content.profile.isDarkMode;
-  const isLiked = id ? content.profile.likedPostIds.includes(id) : false;
-  const isSaved = id ? content.profile.savedPostIds.includes(id) : false;
+  const isLiked = useMemo(() => id ? content.profile.likedPostIds.includes(id) : false, [id, content.profile.likedPostIds]);
+  const isSaved = useMemo(() => id ? content.profile.savedPostIds.includes(id) : false, [id, content.profile.savedPostIds]);
   
   const [realtimeComments, setRealtimeComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -73,12 +153,13 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
   }, [id]);
 
   const handleSendComment = async () => {
-    if (!commentText.trim() || !id) return;
+    if (!commentText.trim() || !id || !displayItem) return;
     await commentsService.addComment(id, {
       usuario: content.profile.name || "Explorador",
       texto: commentText,
       userAvatar: content.profile.avatarUrl,
-      church: content.profile.church
+      church: content.profile.church,
+      postTitle: displayItem.title
     });
     setCommentText('');
     setShowCommentBox(false);
@@ -96,8 +177,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-[#F1F5F9]'}`}>
-      
-      {/* Hero Section */}
       <section className="relative w-full h-[60vh] overflow-hidden">
         <img src={displayItem.imageUrl} className="absolute inset-0 w-full h-full object-cover animate-in fade-in zoom-in-110 duration-1000" alt={displayItem.title} />
         <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-10">
@@ -113,9 +192,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
         </header>
       </section>
 
-      {/* Main Content */}
       <main className={`relative z-20 -mt-24 px-8 pt-16 pb-20 rounded-t-[56px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
-        
         <div className="text-center mb-12 animate-in slide-in-from-bottom-8 duration-700">
            <span className="text-[#3B82F6] font-bold text-[12px] uppercase tracking-[1.2px] mb-5 inline-block">
              {displayItem.categoryFull || displayItem.category}
@@ -130,7 +207,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
            )}
         </div>
 
-        {/* VERSÍCULO CHAVE / ANALOGIA */}
         {displayItem.analogy && displayItem.analogy.text && (
           <div className={`mb-12 p-10 rounded-[40px] border transition-all animate-in slide-in-from-bottom-6 duration-1000 ${isDark ? 'bg-blue-600/5 border-blue-500/20 shadow-2xl shadow-blue-900/10' : 'bg-blue-50/30 border-blue-100 shadow-xl shadow-blue-100/20'}`}>
             <div className="flex items-center gap-5 mb-6">
@@ -145,7 +221,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           </div>
         )}
 
-        {/* Markdown Content Area - Suporte robusto a tipografia */}
         <div 
           className={`prose prose-lg max-w-none mb-10 animate-in fade-in duration-1000 
             ${isDark ? 'prose-invert prose-p:text-slate-400 prose-headings:text-white' : 'prose-p:text-[#334155] prose-headings:text-slate-900'}
@@ -155,24 +230,13 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           dangerouslySetInnerHTML={{ __html: processedContent }}
         />
 
-        {/* Pilar de Fé */}
-        {displayItem.bibleReference && (
-          <div className="mb-20 py-10 px-4 text-center border-y border-slate-50 dark:border-slate-800/30 animate-in fade-in duration-1000">
-            <div className="flex flex-col items-center gap-2 mb-6">
-              <span className="material-symbols-outlined text-[#3B82F6] text-[40px]">menu_book</span>
-              <h4 className="text-[#3B82F6] font-bold text-[12px] uppercase tracking-[1.5px]">Pilar da Fé</h4>
-            </div>
-            <p className={`font-serif text-[20px] leading-[1.6] italic max-w-[90%] mx-auto ${isDark ? 'text-blue-100' : 'text-[#1E293B]'}`}>
-              "{displayItem.bibleReference}"
-            </p>
-          </div>
-        )}
-
-        {/* Social Actions */}
         <div className="flex gap-4 mb-16">
-          <button onClick={() => id && onToggleLike(id)} className={`flex-1 py-5 rounded-[24px] border soft-shadow flex flex-col items-center gap-1 active:scale-95 transition-all ${isLiked ? 'text-red-500 border-red-100 bg-red-50/5' : 'border-slate-100 text-slate-400'}`}>
+          <button 
+            onClick={() => !isLiked && id && onToggleLike(id)} 
+            className={`flex-1 py-5 rounded-[24px] border soft-shadow flex flex-col items-center gap-1 transition-all ${isLiked ? 'text-red-500 border-red-100 bg-red-50/5' : 'border-slate-100 text-slate-400 active:scale-95'}`}
+          >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "" }}>favorite</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest">Amei</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{isLiked ? 'Curtiu' : 'Amei'}</span>
           </button>
           <button onClick={() => setShowCommentBox(!showCommentBox)} className={`flex-1 py-5 rounded-[24px] border soft-shadow flex flex-col items-center gap-1 active:scale-95 transition-all ${showCommentBox ? 'text-blue-600 border-blue-100' : 'border-slate-100 text-slate-400'}`}>
             <span className="material-symbols-outlined">chat_bubble</span>
@@ -184,7 +248,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           </button>
         </div>
 
-        {/* Comment Box */}
         {showCommentBox && (
           <div className="mb-12 animate-in slide-in-from-top-4 duration-300">
              <textarea 
@@ -197,22 +260,29 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           </div>
         )}
 
-        {/* Global Conversations */}
         <section className="mb-20">
           <h3 className="text-2xl font-bold mb-8 text-[#1E293B] dark:text-white">Conversa no SomosUm</h3>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {rootComments.length === 0 ? (
                <p className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">Seja o primeiro a opinar</p>
             ) : rootComments.map(comment => (
-              <CommentItem key={comment.id} comment={comment} allComments={realtimeComments} postId={id!} isDark={isDark} profile={content.profile} />
+              <CommentItem 
+                key={comment.id} 
+                comment={comment} 
+                allComments={realtimeComments} 
+                postId={id!} 
+                isDark={isDark} 
+                profile={content.profile} 
+                onLikeComment={onLikeComment}
+              />
             ))}
           </div>
         </section>
 
-        <div onClick={() => { if(id) markAsRead(id); navigate(`/aprofundar`); }} className="w-full bg-[#3B82F6] p-12 rounded-[40px] flex items-center justify-between text-white shadow-2xl active:scale-95 transition-transform cursor-pointer group">
+        <div onClick={() => { if(id) markAsRead(id); navigate(`/aprofundar`); }} className="w-full bg-[#3B82F6] p-12 rounded-[40px] flex items-center justify-between text-white shadow-2xl active:scale-95 transition-transform cursor-pointer group border border-white/10">
           <div className="text-left">
             <span className="text-[11px] font-bold opacity-60 uppercase block mb-2 tracking-[1.2px]">ESTUDO FINALIZADO</span>
-            <p className="text-[28px] font-bold leading-none tracking-tighter">Concluir Jornada</p>
+            <p className="text-[28px] font-bold leading-none tracking-tighter">Terminei a leitura</p>
           </div>
           <div className="size-16 rounded-3xl bg-white/20 flex items-center justify-center backdrop-blur-md">
             <span className="material-symbols-outlined text-[36px]">check_circle</span>

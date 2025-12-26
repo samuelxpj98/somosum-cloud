@@ -12,10 +12,10 @@ import AprofundarDetail from './pages/AprofundarDetail';
 import Profile from './pages/Profile';
 import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
-import { userService } from './lib/firebase';
+import { userService, commentsService } from './lib/firebase';
 
 const CACHE_KEY = 'somosum_sheets_cache';
-const CACHE_EXPIRATION = 30 * 60 * 1000; // 30 minutos
+const CACHE_EXPIRATION = 30 * 60 * 1000; 
 
 const FALLBACK_DATA: AppContent = {
   branding: { appName: "SOMOSUM", region: "GOIÁS", motto: "Apologética Jovem" },
@@ -40,6 +40,9 @@ const FALLBACK_DATA: AppContent = {
     role: 'user',
     savedPostIds: [],
     likedPostIds: [],
+    likedCommentIds: [],
+    readPostIds: [],
+    loginCount: 1,
     stats: { daysInRow: 1, savedPosts: 0, writtenPosts: 0 }
   }
 };
@@ -61,7 +64,6 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<AppContent>(FALLBACK_DATA);
   const [loading, setLoading] = useState(true);
-  const [readPostIds, setReadPostIds] = useState<string[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
   const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
@@ -70,14 +72,38 @@ const AppContent: React.FC = () => {
     const initializeApp = async () => {
       try {
         const savedProfile = localStorage.getItem('user_profile');
+        let profileToUse: UserProfile;
+
         if (savedProfile) {
-          setUserProfile(JSON.parse(savedProfile));
+          const parsed = JSON.parse(savedProfile);
+          profileToUse = {
+            ...FALLBACK_DATA.profile,
+            ...parsed,
+            readPostIds: parsed.readPostIds || [],
+            likedPostIds: parsed.likedPostIds || [],
+            likedCommentIds: parsed.likedCommentIds || [],
+            loginCount: parsed.loginCount || parsed.stats?.daysInRow || 1,
+            stats: { ...FALLBACK_DATA.profile.stats, ...(parsed.stats || {}) }
+          };
         } else {
-          setUserProfile(FALLBACK_DATA.profile);
+          profileToUse = FALLBACK_DATA.profile;
         }
 
-        const savedReadPosts = localStorage.getItem('read_posts');
-        if (savedReadPosts) setReadPostIds(JSON.parse(savedReadPosts));
+        const today = new Date().toDateString();
+        const lastLogin = profileToUse.lastLoginDate ? new Date(profileToUse.lastLoginDate).toDateString() : "";
+        
+        if (today !== lastLogin) {
+          profileToUse.loginCount = (profileToUse.loginCount || 0) + 1;
+          profileToUse.lastLoginDate = Date.now();
+          profileToUse.stats.daysInRow = profileToUse.loginCount;
+          
+          localStorage.setItem('user_profile', JSON.stringify(profileToUse));
+          if (profileToUse.isProfileComplete) {
+            userService.saveProfile(profileToUse.id, profileToUse).catch(console.error);
+          }
+        }
+
+        setUserProfile(profileToUse);
 
         const cachedData = localStorage.getItem(CACHE_KEY);
         if (cachedData) {
@@ -100,7 +126,6 @@ const AppContent: React.FC = () => {
     const fetchSheetData = async () => {
       const allPosts: Expresso[] = [];
       const allMissions: string[] = [];
-
       await Promise.all(SHEET_URLS.map(async (url) => {
         try {
           const res = await fetch(url);
@@ -108,13 +133,11 @@ const AppContent: React.FC = () => {
           const lines = tsv.split('\n').slice(1);
           const isAprofundarTab = url.includes('gid=922094770');
           const defaultType = isAprofundarTab ? "APROFUNDAR" : "EXPRESSO";
-
           lines.forEach((line, index) => {
             const parts = line.split('\t').map(p => p.trim());
             if (!parts[0]) return;
             const tipo = parts[7]?.toUpperCase() || defaultType;
             const id = `sheet-${url.split('gid=')[1].split('&')[0]}-${index}`;
-
             if (tipo === "MISSAO") {
               allMissions.push(parts[1] || parts[0]);
             } else {
@@ -130,30 +153,19 @@ const AppContent: React.FC = () => {
                 bibleReference: parts[6] || "",
                 categoryType: tipo,
                 tags: [parts[3]?.toLowerCase() || 'geral'],
-                status: 'published',
-                analogy: parts[8] || parts[9] || parts[10] ? {
-                  icon: parts[8] || (isAprofundarTab ? "menu_book" : "bolt"),
-                  title: parts[9] || (isAprofundarTab ? "Versículo Chave" : "A Analogia"),
-                  text: parts[10] || ""
-                } : undefined
+                status: 'published'
               });
             }
           });
         } catch (e) { console.error("Erro fetch aba:", e); }
       }));
-
       if (allPosts.length > 0) {
         setSheetPosts(allPosts);
         setDynamicMissions(allMissions);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          posts: allPosts,
-          missions: allMissions,
-          timestamp: Date.now()
-        }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ posts: allPosts, missions: allMissions, timestamp: Date.now() }));
       }
       setLoading(false);
     };
-
     initializeApp();
   }, []);
 
@@ -165,42 +177,75 @@ const AppContent: React.FC = () => {
   }), [data, userProfile, sheetPosts]);
 
   const updateProfile = (updated: UserProfile) => {
-    setUserProfile(updated);
-    localStorage.setItem('user_profile', JSON.stringify(updated));
+    const complete = {
+      ...FALLBACK_DATA.profile,
+      ...updated,
+      stats: { 
+        ...FALLBACK_DATA.profile.stats, 
+        ...(updated.stats || {}),
+        savedPosts: updated.savedPostIds?.length || 0
+      }
+    };
+    setUserProfile(complete);
+    localStorage.setItem('user_profile', JSON.stringify(complete));
+    if (complete.isProfileComplete) {
+      userService.saveProfile(complete.id, complete).catch(console.error);
+    }
+  };
+
+  const markAsRead = (postId: string) => {
+    if (!userProfile) return;
+    const currentRead = userProfile.readPostIds || [];
+    if (!currentRead.includes(postId)) {
+      const updatedRead = [...currentRead, postId];
+      updateProfile({ ...userProfile, readPostIds: updatedRead });
+    }
   };
 
   const handleLogin = (syncedProfile: UserProfile) => {
-    updateProfile(syncedProfile);
+    const profileToApply = { 
+      ...FALLBACK_DATA.profile, 
+      ...syncedProfile, 
+      isProfileComplete: true 
+    };
+    setUserProfile(profileToApply);
+    localStorage.setItem('user_profile', JSON.stringify(profileToApply));
     navigate('/home');
   };
 
   const toggleSavePost = (id: string) => {
     if (!userProfile) return;
-    const isSaved = userProfile.savedPostIds.includes(id);
-    const newSavedIds = isSaved ? userProfile.savedPostIds.filter(pid => pid !== id) : [...userProfile.savedPostIds, id];
-    updateProfile({ ...userProfile, savedPostIds: newSavedIds, stats: { ...userProfile.stats, savedPosts: newSavedIds.length } });
+    const isSaved = (userProfile.savedPostIds || []).includes(id);
+    const newSavedIds = isSaved ? userProfile.savedPostIds.filter(pid => pid !== id) : [...(userProfile.savedPostIds || []), id];
+    updateProfile({ ...userProfile, savedPostIds: newSavedIds });
   };
 
-  const toggleLikePost = (id: string) => {
+  const toggleLikePost = async (id: string) => {
     if (!userProfile) return;
-    const isLiked = userProfile.likedPostIds.includes(id);
-    const newLikedIds = isLiked ? userProfile.likedPostIds.filter(pid => pid !== id) : [...userProfile.likedPostIds, id];
+    const isLiked = (userProfile.likedPostIds || []).includes(id);
+    // Se já curtiu, não permite curtir de novo (ou remove, dependendo da UX desejada, mas o usuário pediu "não permita mais de uma vez")
+    if (isLiked) return; 
+
+    const newLikedIds = [...(userProfile.likedPostIds || []), id];
     updateProfile({ ...userProfile, likedPostIds: newLikedIds });
+    // Aqui poderiamos ter uma função commentsService.likePost(id) se tivéssemos contagem de likes em posts no DB
   };
 
-  const markAsRead = (id: string) => {
-    if (!readPostIds.includes(id)) {
-      const newReadPosts = [...readPostIds, id];
-      setReadPostIds(newReadPosts);
-      localStorage.setItem('read_posts', JSON.stringify(newReadPosts));
-    }
+  const toggleLikeComment = async (postId: string, commentId: string) => {
+    if (!userProfile) return;
+    const alreadyLiked = (userProfile.likedCommentIds || []).includes(commentId);
+    if (alreadyLiked) return;
+
+    const newLikedCommentIds = [...(userProfile.likedCommentIds || []), commentId];
+    await commentsService.likeComment(postId, commentId);
+    updateProfile({ ...userProfile, likedCommentIds: newLikedCommentIds });
   };
 
   if (loading && sheetPosts.length === 0) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Moendo Grãos Teológicos...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Dados...</p>
       </div>
     </div>
   );
@@ -210,14 +255,13 @@ const AppContent: React.FC = () => {
       <Routes>
         <Route path="/" element={<Landing content={mergedContent} onLogin={handleLogin} />} />
         <Route path="/onboarding" element={<Onboarding profile={mergedContent.profile} onUpdate={updateProfile} />} />
-        
         <Route path="/home" element={<ProtectedRoute profile={mergedContent.profile}><Home content={mergedContent} missions={dynamicMissions} /></ProtectedRoute>} />
-        <Route path="/expresso" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoPage content={mergedContent} readPostIds={readPostIds} /></ProtectedRoute>} />
-        <Route path="/expresso/:id" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} /></ProtectedRoute>} />
+        <Route path="/expresso" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoPage content={mergedContent} readPostIds={mergedContent.profile.readPostIds} /></ProtectedRoute>} />
+        <Route path="/expresso/:id" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={toggleLikeComment} /></ProtectedRoute>} />
         <Route path="/comunidade" element={<ProtectedRoute profile={mergedContent.profile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
-        <Route path="/aprofundar" element={<ProtectedRoute profile={mergedContent.profile}><Aprofundar content={mergedContent} readPostIds={readPostIds} userPosts={sheetPosts} /></ProtectedRoute>} />
-        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={mergedContent.profile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute profile={mergedContent.profile}><Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={readPostIds.length} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/aprofundar" element={<ProtectedRoute profile={mergedContent.profile}><Aprofundar content={mergedContent} readPostIds={mergedContent.profile.readPostIds} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={mergedContent.profile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={toggleLikeComment} /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute profile={mergedContent.profile}><Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={mergedContent.profile.readPostIds?.length || 0} userPosts={sheetPosts} /></ProtectedRoute>} />
       </Routes>
       <BottomNav isDarkMode={mergedContent.profile.isDarkMode} profileComplete={mergedContent.profile.isProfileComplete} />
     </div>

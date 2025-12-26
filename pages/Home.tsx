@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import Header from '../components/Header';
+import AppGuide from '../components/AppGuide';
 
 const FALLBACK_MISSIONS = [
   "Memorize 1 Pedro 3:15 hoje e pense em como aplicá-lo em uma conversa real.",
@@ -25,6 +27,7 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
   const navigate = useNavigate();
   const [currentMission, setCurrentMission] = useState<string | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const isDark = content.profile.isDarkMode;
 
   const handleGetMission = () => {
@@ -41,7 +44,24 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
     <div className={`pb-28 min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'}`}>
       <Header content={content} />
       
+      {showGuide && <AppGuide onClose={() => setShowGuide(false)} isDark={isDark} />}
+
       <main className="px-6 space-y-8 mt-6">
+        {/* Guia Rápido de Uso */}
+        <section 
+          onClick={() => setShowGuide(true)}
+          className={`p-5 rounded-[32px] border flex items-center gap-4 cursor-pointer active:scale-95 transition-all animate-in slide-in-from-top-4 duration-700 ${isDark ? 'bg-slate-800/50 border-blue-500/20 shadow-xl shadow-blue-900/10' : 'bg-white border-blue-100 shadow-sm shadow-blue-100/50'}`}
+        >
+          <div className="size-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+            <span className="material-symbols-outlined text-[24px]">explore</span>
+          </div>
+          <div className="flex-1">
+            <h4 className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-[#1E293B]'}`}>Manual do Apologeta</h4>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Entenda como cada parte do app funciona</p>
+          </div>
+          <span className="material-symbols-outlined text-blue-500">chevron_right</span>
+        </section>
+
         {/* Expressos */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
@@ -116,7 +136,7 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
           </div>
         </section>
 
-        {/* Missão de Hoje (Encerrando o feed) */}
+        {/* Missão de Hoje */}
         <section className="space-y-4 pt-4 animate-in fade-in duration-700">
            <div className={`p-8 rounded-[40px] border shadow-2xl transition-all relative overflow-hidden ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-white border-slate-100'}`}>
               <div className="flex items-center gap-4 mb-6 relative z-10">
@@ -166,7 +186,6 @@ const Home: React.FC<HomeProps> = ({ content, missions }) => {
                 </div>
               )}
               
-              {/* Efeito de fundo decorativo */}
               <div className="absolute top-0 right-0 size-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
            </div>
         </section>
