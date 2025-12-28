@@ -1,26 +1,33 @@
-# SomosUm Goiás - App de Apologética (Versão Estática)
+# SomosUm Goiás - App de Apologética
 
-Uma plataforma dinâmica desenvolvida para jovens explorarem a harmonia entre fé e razão. O app oferece conteúdos rápidos ("Expressos") e estudos aprofundados sobre apologética cristã.
+Este é o código-fonte do aplicativo SomosUm Goiás, otimizado para deploy no Cloudflare Pages e banco de dados Firebase.
 
-## 🚀 Arquitetura 100% Estática
+## 🚀 Por que o Commit não é automático?
 
-Esta versão do aplicativo foi otimizada para rodar de forma totalmente local e estática, garantindo:
-- **Custo Zero**: Sem necessidade de chaves de API pagas ou créditos de IA.
-- **Privacidade Máxima**: Nenhum dado é enviado para servidores externos de processamento de linguagem.
-- **Velocidade**: Carregamento instantâneo, pois todas as funcionalidades de "geração" rodam localmente via algoritmos de seletividade.
+Como eu sou um assistente de IA, eu gero o **código** para você, mas a ação de **Salvar no GitHub (Commit)** e **Enviar (Push)** é uma etapa de controle sua. 
 
-## 🛠️ Tecnologias
+Para que as mudanças apareçam no seu site:
+1. Certifique-se de que os arquivos foram atualizados com o código que eu forneci.
+2. No seu terminal ou interface de Git, realize o commit e o push:
+   ```bash
+   git add .
+   git commit -m "Ajustes de rotas e suporte Cloudflare"
+   git push origin main
+   ```
+3. Assim que o push for feito, o Cloudflare Pages iniciará o build automaticamente.
 
-- **React 19** + **TypeScript**
-- **Vite** (Build Tool)
-- **Tailwind CSS** (Estilização)
-- **Cloudflare Pages** (Hospedagem de alto desempenho)
+## ☁️ Configurações no Cloudflare Pages
 
-## 📄 Funcionalidades Locais
+### 1. Roteamento (SPA)
+Adicionamos o arquivo `_redirects` na raiz. Ele é essencial para que o React Router funcione corretamente. Sem ele, se você der F5 na página de Perfil, o servidor retornará um erro 404.
 
-- **Missão do Dia**: Gerador aleatório baseado em uma biblioteca interna de 20+ desafios práticos.
-- **Curadoria de Imagens**: Seletor de capas contextuais utilizando uma biblioteca local de alta qualidade para o editor.
-- **Conteúdo Dinâmico**: Gerenciamento de dados via `conteudo.json`.
+### 2. Variáveis de Ambiente (Obrigatório)
+O Mentor IA precisa da sua chave para funcionar. No painel da Cloudflare:
+- Vá em **Settings** -> **Environment Variables**.
+- Clique em **Add variable**.
+- **Variable name:** `API_KEY`
+- **Value:** (Sua chave do Google Gemini obtida no Google AI Studio)
 
----
-Desenvolvido para o ministério SomosUm Goiás.
+## 📁 Autor
+Desenvolvido por **Samuel Duarte** para o movimento SomosUm Goiás.
+Fé moída na Razão.

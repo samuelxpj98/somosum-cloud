@@ -3,6 +3,7 @@ export interface Comment {
   id: string;
   usuario: string;
   userAvatar: string;
+  userColor?: string; // Cor do avatar do usuário
   church: string;
   texto: string;
   likes: number;
@@ -48,16 +49,18 @@ export interface UserProfile {
   name: string;
   email: string;
   avatarUrl: string;
+  avatarColor?: string; 
   church: string;
   whatsapp: string;
   education: string;
   isPastor: boolean;
+  leadershipRole?: 'pastor' | 'lider_juventude' | 'none'; // Nova diferenciação
   isDarkMode: boolean;
   isProfileComplete: boolean;
   role: 'user' | 'admin';
   savedPostIds: string[];
   likedPostIds: string[];
-  likedCommentIds: string[]; // Controle de likes em comentários
+  likedCommentIds: string[];
   readPostIds: string[];
   loginCount: number;
   lastLoginDate?: number;

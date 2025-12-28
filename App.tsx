@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
 import Landing from './pages/Landing';
@@ -14,8 +14,15 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-const CACHE_KEY = 'somosum_sheets_cache';
-const CACHE_EXPIRATION = 30 * 60 * 1000; 
+const CACHE_KEY = 'somosum_sheets_cache_v5'; // Versão aumentada para forçar atualização
+const CACHE_EXPIRATION = 2 * 60 * 1000; 
+
+export const AVATAR_COLORS = [
+  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
+  '#6366F1', '#06B6D4', '#F97316', '#14B8A6', '#D946EF', '#475569'
+];
+
+const getRandomColor = () => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
 const FALLBACK_DATA: AppContent = {
   branding: { appName: "SOMOSUM", region: "GOIÁS", motto: "Apologética Jovem" },
@@ -30,7 +37,8 @@ const FALLBACK_DATA: AppContent = {
     id: 'user-' + Math.random().toString(36).substr(2, 9),
     name: "Explorador",
     email: "",
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral",
+    avatarUrl: "", 
+    avatarColor: getRandomColor(),
     church: "",
     whatsapp: "",
     education: "",
@@ -60,217 +68,164 @@ const SHEET_URLS = [
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDakgfBDNrAjigSbsNHuSZaDzDwNtvKYn7liPnycTYYveR1WAbChhahZPFLi4Ywd7IGBItymUbFE4/pub?gid=922094770&single=true&output=tsv"
 ];
 
-const AppContent: React.FC = () => {
+const AppContentComponent: React.FC = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<AppContent>(FALLBACK_DATA);
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile>(FALLBACK_DATA.profile);
   const [sheetPosts, setSheetPosts] = useState<Expresso[]>([]);
   const [dynamicMissions, setDynamicMissions] = useState<string[]>([]);
 
+  const fetchSheetData = async () => {
+    const allPosts: Expresso[] = [];
+    const allMissions: string[] = [];
+    
+    await Promise.all(SHEET_URLS.map(async (url) => {
+      try {
+        const res = await fetch(`${url}&t=${Date.now()}`);
+        if (!res.ok) throw new Error("Falha na rede");
+        
+        const tsvText = await res.text();
+        const cleanTsv = tsvText.replace(/^\uFEFF/, '').replace(/\r/g, '');
+        const lines = cleanTsv.split('\n').filter(line => line.trim() !== "");
+        const rows = lines.slice(1);
+        
+        const gid = url.split('gid=')[1].split('&')[0];
+        const isAprofundarTab = gid === '922094770';
+
+        rows.forEach((line, index) => {
+          const parts = line.split('\t').map(p => p.trim());
+          if (!parts[0]) return; 
+
+          let tipoRaw = (parts[7] || "").toUpperCase().trim();
+          let tipo = "EXPRESSO";
+          if (tipoRaw.includes("APROFUNDAR")) tipo = "APROFUNDAR";
+          else if (tipoRaw.includes("MISSAO") || tipoRaw.includes("MISSÃO")) tipo = "MISSAO";
+          else if (isAprofundarTab) tipo = "APROFUNDAR";
+
+          if (tipo === "MISSAO") {
+            allMissions.push(parts[1] || parts[0]);
+          } else {
+            allPosts.push({
+              id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
+              title: parts[0],
+              content: (parts[1] || "").replace(/\\n/g, '\n'),
+              imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
+              category: parts[3] || "GERAL",
+              categoryFull: parts[3] || "GERAL",
+              subtitle: parts[4] || "",
+              readingTime: parts[5] || (tipo === "APROFUNDAR" ? "8 MIN" : "2 MIN"),
+              bibleReference: parts[6] || "",
+              categoryType: tipo,
+              tags: [parts[3]?.toLowerCase() || 'geral'],
+              status: 'published'
+            });
+          }
+        });
+      } catch (e) {
+        console.error("Erro na carga da planilha:", e);
+      }
+    }));
+
+    if (allPosts.length > 0) {
+      setSheetPosts(allPosts);
+      setDynamicMissions(allMissions);
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ 
+        posts: allPosts, 
+        missions: allMissions, 
+        timestamp: Date.now() 
+      }));
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     const initializeApp = async () => {
-      try {
-        const savedProfile = localStorage.getItem('user_profile');
-        let profileToUse: UserProfile;
+      const savedProfile = localStorage.getItem('user_profile');
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        setUserProfile(profile);
+        if (location.pathname === '/') navigate('/home', { replace: true });
+      }
 
-        if (savedProfile) {
-          const parsed = JSON.parse(savedProfile);
-          profileToUse = {
-            ...FALLBACK_DATA.profile,
-            ...parsed,
-            readPostIds: parsed.readPostIds || [],
-            likedPostIds: parsed.likedPostIds || [],
-            likedCommentIds: parsed.likedCommentIds || [],
-            loginCount: parsed.loginCount || parsed.stats?.daysInRow || 1,
-            stats: { ...FALLBACK_DATA.profile.stats, ...(parsed.stats || {}) }
-          };
-        } else {
-          profileToUse = FALLBACK_DATA.profile;
-        }
-
-        const today = new Date().toDateString();
-        const lastLogin = profileToUse.lastLoginDate ? new Date(profileToUse.lastLoginDate).toDateString() : "";
-        
-        if (today !== lastLogin) {
-          profileToUse.loginCount = (profileToUse.loginCount || 0) + 1;
-          profileToUse.lastLoginDate = Date.now();
-          profileToUse.stats.daysInRow = profileToUse.loginCount;
-          
-          localStorage.setItem('user_profile', JSON.stringify(profileToUse));
-          if (profileToUse.isProfileComplete) {
-            userService.saveProfile(profileToUse.id, profileToUse).catch(console.error);
-          }
-        }
-
-        setUserProfile(profileToUse);
-
-        const cachedData = localStorage.getItem(CACHE_KEY);
-        if (cachedData) {
-          const { posts, missions, timestamp } = JSON.parse(cachedData);
-          if (Date.now() - timestamp < CACHE_EXPIRATION) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const { posts, missions, timestamp } = JSON.parse(cached);
+          if (posts && (Date.now() - timestamp < CACHE_EXPIRATION)) {
             setSheetPosts(posts);
             setDynamicMissions(missions);
             setLoading(false);
-            fetchSheetData();
+            fetchSheetData(); 
             return;
           }
+        } catch (e) {
+          localStorage.removeItem(CACHE_KEY);
         }
-        await fetchSheetData();
-      } catch (error) { 
-        console.error("Erro na inicialização:", error); 
-        setLoading(false);
       }
-    };
-
-    const fetchSheetData = async () => {
-      const allPosts: Expresso[] = [];
-      const allMissions: string[] = [];
-      await Promise.all(SHEET_URLS.map(async (url) => {
-        try {
-          const res = await fetch(url);
-          const tsv = await res.text();
-          const lines = tsv.split('\n').slice(1);
-          const isAprofundarTab = url.includes('gid=922094770');
-          const defaultType = isAprofundarTab ? "APROFUNDAR" : "EXPRESSO";
-          lines.forEach((line, index) => {
-            const parts = line.split('\t').map(p => p.trim());
-            if (!parts[0]) return;
-            const tipo = parts[7]?.toUpperCase() || defaultType;
-            const id = `sheet-${url.split('gid=')[1].split('&')[0]}-${index}`;
-            if (tipo === "MISSAO") {
-              allMissions.push(parts[1] || parts[0]);
-            } else {
-              allPosts.push({
-                id,
-                title: parts[0],
-                content: parts[1],
-                imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
-                category: parts[3] || "GERAL",
-                categoryFull: parts[3],
-                subtitle: parts[4] || "",
-                readingTime: parts[5] || (isAprofundarTab ? "8 MIN" : "2 MIN"),
-                bibleReference: parts[6] || "",
-                categoryType: tipo,
-                tags: [parts[3]?.toLowerCase() || 'geral'],
-                status: 'published'
-              });
-            }
-          });
-        } catch (e) { console.error("Erro fetch aba:", e); }
-      }));
-      if (allPosts.length > 0) {
-        setSheetPosts(allPosts);
-        setDynamicMissions(allMissions);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ posts: allPosts, missions: allMissions, timestamp: Date.now() }));
-      }
-      setLoading(false);
+      await fetchSheetData();
     };
     initializeApp();
   }, []);
 
   const mergedContent = useMemo(() => ({
-    ...data,
+    ...FALLBACK_DATA,
     expressos: sheetPosts.filter(p => p.categoryType === 'EXPRESSO'),
     sheetPosts: sheetPosts,
-    profile: userProfile || FALLBACK_DATA.profile
-  }), [data, userProfile, sheetPosts]);
+    profile: userProfile
+  }), [userProfile, sheetPosts]);
 
-  const updateProfile = (updated: UserProfile) => {
-    const complete = {
-      ...FALLBACK_DATA.profile,
-      ...updated,
-      stats: { 
-        ...FALLBACK_DATA.profile.stats, 
-        ...(updated.stats || {}),
-        savedPosts: updated.savedPostIds?.length || 0
-      }
-    };
+  const updateProfile = (updated: Partial<UserProfile>) => {
+    const complete = { ...userProfile, ...updated };
     setUserProfile(complete);
     localStorage.setItem('user_profile', JSON.stringify(complete));
-    if (complete.isProfileComplete) {
-      userService.saveProfile(complete.id, complete).catch(console.error);
-    }
-  };
-
-  const markAsRead = (postId: string) => {
-    if (!userProfile) return;
-    const currentRead = userProfile.readPostIds || [];
-    if (!currentRead.includes(postId)) {
-      const updatedRead = [...currentRead, postId];
-      updateProfile({ ...userProfile, readPostIds: updatedRead });
-    }
+    if (complete.isProfileComplete) userService.saveProfile(complete.id, complete).catch(console.error);
   };
 
   const handleLogin = (syncedProfile: UserProfile) => {
-    const profileToApply = { 
-      ...FALLBACK_DATA.profile, 
-      ...syncedProfile, 
-      isProfileComplete: true 
-    };
-    setUserProfile(profileToApply);
-    localStorage.setItem('user_profile', JSON.stringify(profileToApply));
+    const baseProfile = { ...FALLBACK_DATA.profile, ...syncedProfile, isProfileComplete: true };
+    setUserProfile(baseProfile);
+    localStorage.setItem('user_profile', JSON.stringify(baseProfile));
     navigate('/home');
   };
 
   const toggleSavePost = (id: string) => {
-    if (!userProfile) return;
-    const isSaved = (userProfile.savedPostIds || []).includes(id);
-    const newSavedIds = isSaved ? userProfile.savedPostIds.filter(pid => pid !== id) : [...(userProfile.savedPostIds || []), id];
-    updateProfile({ ...userProfile, savedPostIds: newSavedIds });
-  };
-
-  const toggleLikePost = async (id: string) => {
-    if (!userProfile) return;
-    const isLiked = (userProfile.likedPostIds || []).includes(id);
-    // Se já curtiu, não permite curtir de novo (ou remove, dependendo da UX desejada, mas o usuário pediu "não permita mais de uma vez")
-    if (isLiked) return; 
-
-    const newLikedIds = [...(userProfile.likedPostIds || []), id];
-    updateProfile({ ...userProfile, likedPostIds: newLikedIds });
-    // Aqui poderiamos ter uma função commentsService.likePost(id) se tivéssemos contagem de likes em posts no DB
-  };
-
-  const toggleLikeComment = async (postId: string, commentId: string) => {
-    if (!userProfile) return;
-    const alreadyLiked = (userProfile.likedCommentIds || []).includes(commentId);
-    if (alreadyLiked) return;
-
-    const newLikedCommentIds = [...(userProfile.likedCommentIds || []), commentId];
-    await commentsService.likeComment(postId, commentId);
-    updateProfile({ ...userProfile, likedCommentIds: newLikedCommentIds });
+    const currentSaved = userProfile.savedPostIds || [];
+    const isSaved = currentSaved.includes(id);
+    const newSavedIds = isSaved ? currentSaved.filter(pid => pid !== id) : [...currentSaved, id];
+    updateProfile({ savedPostIds: newSavedIds });
   };
 
   if (loading && sheetPosts.length === 0) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Dados...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando...</p>
       </div>
     </div>
   );
 
   return (
-    <div className={`mx-auto max-w-md min-h-screen shadow-xl relative overflow-x-hidden ${mergedContent.profile.isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+    <div className={`mx-auto max-w-md min-h-screen shadow-xl relative overflow-x-hidden ${userProfile.isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
       <Routes>
         <Route path="/" element={<Landing content={mergedContent} onLogin={handleLogin} />} />
-        <Route path="/onboarding" element={<Onboarding profile={mergedContent.profile} onUpdate={updateProfile} />} />
-        <Route path="/home" element={<ProtectedRoute profile={mergedContent.profile}><Home content={mergedContent} missions={dynamicMissions} /></ProtectedRoute>} />
-        <Route path="/expresso" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoPage content={mergedContent} readPostIds={mergedContent.profile.readPostIds} /></ProtectedRoute>} />
-        <Route path="/expresso/:id" element={<ProtectedRoute profile={mergedContent.profile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={toggleLikeComment} /></ProtectedRoute>} />
-        <Route path="/comunidade" element={<ProtectedRoute profile={mergedContent.profile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
-        <Route path="/aprofundar" element={<ProtectedRoute profile={mergedContent.profile}><Aprofundar content={mergedContent} readPostIds={mergedContent.profile.readPostIds} userPosts={sheetPosts} /></ProtectedRoute>} />
-        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={mergedContent.profile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={toggleLikeComment} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute profile={mergedContent.profile}><Profile profile={mergedContent.profile} onUpdate={updateProfile} readCount={mergedContent.profile.readPostIds?.length || 0} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/onboarding" element={<Onboarding profile={userProfile} onUpdate={updateProfile} />} />
+        <Route path="/home" element={<ProtectedRoute profile={userProfile}><Home content={mergedContent} missions={dynamicMissions} /></ProtectedRoute>} />
+        <Route path="/expresso" element={<ProtectedRoute profile={userProfile}><ExpressoPage content={mergedContent} readPostIds={userProfile.readPostIds} /></ProtectedRoute>} />
+        <Route path="/expresso/:id" element={<ProtectedRoute profile={userProfile}><ExpressoDetail content={mergedContent} onToggleSave={toggleSavePost} /></ProtectedRoute>} />
+        <Route path="/comunidade" element={<ProtectedRoute profile={userProfile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
+        <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={userProfile}><AprofundarDetail content={mergedContent} onToggleSave={toggleSavePost} /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute profile={userProfile}><Profile profile={userProfile} onUpdate={updateProfile} readCount={userProfile.readPostIds?.length || 0} totalPostsCount={sheetPosts.length} userPosts={sheetPosts} /></ProtectedRoute>} />
       </Routes>
-      <BottomNav isDarkMode={mergedContent.profile.isDarkMode} profileComplete={mergedContent.profile.isProfileComplete} />
+      <BottomNav isDarkMode={userProfile.isDarkMode} profileComplete={userProfile.isProfileComplete} />
     </div>
   );
 };
 
 const App: React.FC = () => (
   <Router>
-    <AppContent />
+    <AppContentComponent />
   </Router>
 );
 
