@@ -14,7 +14,7 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-const CACHE_KEY = 'somosum_sheets_cache_v5'; // Versão aumentada para forçar atualização
+const CACHE_KEY = 'somosum_sheets_cache_v6'; 
 const CACHE_EXPIRATION = 2 * 60 * 1000; 
 
 export const AVATAR_COLORS = [
