@@ -1,0 +1,29 @@
+
+{
+  "branding": {
+    "appName": "SOMOSUM",
+    "region": "GOIÁS",
+    "motto": "Apologética Jovem"
+  },
+  "landing": {
+    "title": "DESPERTE SUA MENTE",
+    "description": "Sua dose diária de fé e razão. Um guia para expandir seus conhecimentos e compartilhar sua cosmovisão com autoridade.",
+    "heroImage": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200"
+  },
+  "expressos": [],
+  "comments": [],
+  "profile": {
+    "name": "Explorador",
+    "email": "",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral",
+    "church": "Não informado",
+    "education": "Não informado",
+    "course": "",
+    "isDarkMode": false,
+    "stats": {
+      "daysInRow": 1,
+      "savedPosts": 0,
+      "writtenPosts": 0
+    }
+  }
+}
