@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContent, Expresso } from '../types';
@@ -7,8 +6,8 @@ import { commentsService } from '../lib/firebase';
 
 const calculateLValue = (text: string): number => {
   if (!text) return 0;
-  const urls = text.match(/https?:\/\/[^\s]+/g) || [];
-  // Regex para referências bíblicas (Ex: Jo 3:16, Gênesis 1:1)
+  // Fix: Explicitly type urls as string[] to avoid 'never' type inference
+  const urls: string[] = text.match(/https?:\/\/[^\s]+/g) || [];
   const bibleRefRegex = /(?:[123]\s)?(?:Gên|Êxo|Lev|Nâm|Deu|Jos|Juí|Rut|1Sm|2Sm|1Rs|2Rs|1Cr|2Cr|Esd|Nee|Est|Jó|Sal|Pro|Ecl|Can|Isa|Jer|Lam|Eze|Dan|Ose|Joe|Amó|Oba|Jon|Miq|Naú|Hab|Sof|Age|Zac|Mal|Mat|Mar|Luc|João|Atos|Rom|1Co|2Co|Gál|Efe|Fil|Col|1Te|2Te|1Ti|2Ti|Tit|Flm|Heb|Tia|1Pe|2Pe|1Jo|2Jo|3Jo|Jud|Apo)\.?\s\d+/gi;
   const hasBibleRef = bibleRefRegex.test(text);
 
@@ -18,16 +17,9 @@ const calculateLValue = (text: string): number => {
   let maxL = 1;
   urls.forEach(url => {
     const u = url.toLowerCase();
-    // L=0: Redes Sociais
-    if (u.includes('instagram.com') || u.includes('tiktok.com') || u.includes('facebook.com')) {
-      maxL = Math.max(maxL, 0);
-    } 
-    // L=3: Acadêmico/Histórico
-    else if (u.includes('.edu') || u.includes('.org') || u.includes('journal') || u.includes('museum') || u.includes('history')) {
+    if (u.includes('edu') || u.includes('org') || u.includes('journal') || u.includes('museum') || u.includes('history')) {
       maxL = 3;
-    } 
-    // L=2: Notícias/Internos
-    else if (u.includes('news') || u.includes('somosum') || u.includes('portal') || u.includes('g1.globo') || u.includes('folha')) {
+    } else if (u.includes('news') || u.includes('somosum') || u.includes('portal') || u.includes('g1.globo')) {
       maxL = Math.max(maxL, 2);
     }
   });
@@ -101,26 +93,21 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
   }, []);
 
   const { trending, recent } = useMemo(() => {
-    const expressos = content.expressos;
+    const expressos = content.expressos || [];
+    if (expressos.length === 0) return { trending: [], recent: [] };
+
     const now = Date.now();
-    
     const scored = expressos.map(item => {
       const postComments = allComments.filter(c => c.postId === item.id);
       const C = postComments.length;
       const L = calculateLValue(item.content);
-      const V = 0; // Placeholder para likes futuros no post
-      
-      // T em horas (mínimo 1h para não estourar score)
-      const postTime = item.id.startsWith('sheet') ? now - (3600000 * 24) : now;
-      const T = Math.max(1, (now - postTime) / 3600000);
-      
-      // Fórmula EXPRESSO: R = ((C * 4) + (L * 2) + (V * 2)) / T^2.0
+      const V = 0;
+      const T = Math.max(1, (now - (item.id.includes('sheet') ? now - 86400000 : now)) / 3600000);
       const score = ((C * 4) + (L * 2) + (V * 2)) / Math.pow(T, 2.0);
-      
       return { ...item, score };
     });
 
-    const sortedByScore = [...scored].sort((a, b) => b.score - a.score);
+    const sortedByScore = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0));
     const trendingItems = sortedByScore.slice(0, 4);
     const trendingIds = trendingItems.map(i => i.id);
     
@@ -149,44 +136,56 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
           </p>
         </section>
 
-        <section>
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-              <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Degustação</h3>
+        {content.expressos.length === 0 ? (
+          <section className="py-20 text-center flex flex-col items-center gap-4 opacity-40">
+            <span className="material-symbols-outlined text-6xl text-slate-400">coffee_maker</span>
+            <div className="space-y-1">
+               <p className="text-sm font-black uppercase tracking-widest">Moedor Vazio</p>
+               <p className="text-[10px] font-bold">Nenhum Expresso foi publicado ainda.</p>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
-              Ranqueado pelo Algoritmo de Curadoria Inteligente.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {trending.map((item, index) => (
-              <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
-            ))}
-          </div>
-        </section>
+          </section>
+        ) : (
+          <>
+            <section>
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                  <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Degustação</h3>
+                </div>
+                <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
+                  Posts curtos com mais curtidas e comentários do APP
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {trending.map((item, index) => (
+                  <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
+                ))}
+              </div>
+            </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
-              <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Moídos na Hora</h3>
-            </div>
-            {content.expressos.length > 4 && (
-              <button 
-                onClick={() => setShowAllRecent(!showAllRecent)}
-                className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
-              >
-                {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {recent.map(item => (
-              <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} />
-            ))}
-          </div>
-        </section>
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+                  <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Moídos na Hora</h3>
+                </div>
+                {content.expressos.length > 4 && (
+                  <button 
+                    onClick={() => setShowAllRecent(!showAllRecent)}
+                    className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
+                  >
+                    {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {recent.map(item => (
+                  <Card key={item.id} item={item} isGrid isRead={readPostIds.includes(item.id)} isDark={isDark} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

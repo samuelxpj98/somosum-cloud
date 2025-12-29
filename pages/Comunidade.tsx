@@ -17,11 +17,13 @@ const CommunityCommentCard: React.FC<{
     navigate(`/${path}/${comment.postId}`);
   };
 
+  const hasPhoto = comment.userAvatar && comment.userAvatar.length > 10;
+
   const getRankBadge = (pos: number) => {
     const colors = [
-      'bg-amber-400 text-amber-950', // 1º Ouro
-      'bg-slate-300 text-slate-900',  // 2º Prata
-      'bg-orange-400 text-orange-950' // 3º Bronze
+      'bg-amber-400 text-amber-950', 
+      'bg-slate-300 text-slate-900',  
+      'bg-orange-400 text-orange-950' 
     ];
     return (
       <div className={`size-6 rounded-lg flex items-center justify-center font-black text-[10px] shadow-lg ${colors[pos-1]}`}>
@@ -46,8 +48,15 @@ const CommunityCommentCard: React.FC<{
       )}
 
       <div className="flex gap-4 items-start">
-        <div className="size-11 rounded-2xl bg-[#1E293B] flex items-center justify-center text-white font-bold text-[11px] shrink-0 overflow-hidden shadow-inner">
-          {comment.userAvatar ? <img src={comment.userAvatar} className="size-full object-cover" /> : comment.usuario?.charAt(0)}
+        <div 
+          className={`size-11 rounded-2xl flex items-center justify-center text-white font-bold text-[14px] shrink-0 overflow-hidden shadow-inner`}
+          style={{ backgroundColor: !hasPhoto ? (comment.userColor || '#3B82F6') : '#1E293B' }}
+        >
+          {hasPhoto ? (
+            <img src={comment.userAvatar} className="size-full object-cover" />
+          ) : (
+            <span>{comment.usuario?.charAt(0).toUpperCase()}</span>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-2">
@@ -100,7 +109,6 @@ const Comunidade: React.FC<{ content: any }> = ({ content }) => {
     const rootComments = allComments.filter(c => !c.parentId);
     const now = Date.now();
     
-    // Calcula Score de Relevância (R): ((Replies * 5) + (Upvotes * 2)) / T^1.5
     const scored = rootComments.map(c => {
       const repliesCount = allComments.filter(reply => reply.parentId === c.id).length;
       const T = Math.max(1, (now - (c.hora || now - 3600000)) / 3600000);

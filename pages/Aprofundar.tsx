@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Expresso } from '../types';
@@ -16,7 +15,8 @@ export const FIXED_CATEGORIES = [
 
 const calculateLValue = (text: string): number => {
   if (!text) return 0;
-  const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+  // Fix: Explicitly type urls as string[] to avoid 'never' type inference
+  const urls: string[] = text.match(/https?:\/\/[^\s]+/g) || [];
   const bibleRefRegex = /(?:[123]\s)?(?:Gên|Êxo|Lev|Nâm|Deu|Jos|Juí|Rut|1Sm|2Sm|1Rs|2Rs|1Cr|2Cr|Esd|Nee|Est|Jó|Sal|Pro|Ecl|Can|Isa|Jer|Lam|Eze|Dan|Ose|Joe|Amó|Oba|Jon|Miq|Naú|Hab|Sof|Age|Zac|Mal|Mat|Mar|Luc|João|Atos|Rom|1Co|2Co|Gál|Efe|Fil|Col|1Te|2Te|1Ti|2Ti|Tit|Flm|Heb|Tia|1Pe|2Pe|1Jo|2Jo|3Jo|Jud|Apo)\.?\s\d+/gi;
   const hasBibleRef = bibleRefRegex.test(text);
 
@@ -115,10 +115,7 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
       const L = calculateLValue(item.content);
       const V = 0;
       const T = Math.max(1, (now - (item.hora || now - 86400000)) / 3600000);
-      
-      // Fórmula APROFUNDAR: R = ((C * 5) + (L * 5) + (V * 1)) / T^1.3
       const score = ((C * 5) + (L * 5) + (V * 1)) / Math.pow(T, 1.3);
-      
       return { ...item, score };
     });
 
@@ -158,7 +155,7 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
               <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
             </div>
             <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
-              Autoridade intelectual baseada em referências bíblicas e históricas.
+              Artigos com mais reflexões, curtidas e comentários.
             </p>
           </div>
           <div className="space-y-6">

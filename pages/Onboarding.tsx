@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '../types';
@@ -16,7 +15,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [education, setEducation] = useState('');
-  const [isPastor, setIsPastor] = useState(false);
+  const [leadership, setLeadership] = useState<'pastor' | 'lider_juventude' | 'none'>('none');
   const [loading, setLoading] = useState(false);
   const isDark = profile.isDarkMode;
 
@@ -32,14 +31,22 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
       whatsapp: whatsapp,
       email: email.toLowerCase().trim(),
       education: education,
-      isPastor: isPastor,
+      isPastor: leadership !== 'none',
+      leadershipRole: leadership,
       isProfileComplete: true
     };
 
     try {
       await userService.saveProfile(profile.id || 'anonymous', updatedProfile);
       onUpdate(updatedProfile);
-      navigate('/home');
+      
+      const intended = sessionStorage.getItem('intended_destination');
+      if (intended) {
+        sessionStorage.removeItem('intended_destination');
+        navigate(intended);
+      } else {
+        navigate('/home');
+      }
     } catch (err) {
       console.error("Erro ao salvar perfil:", err);
     } finally {
@@ -50,7 +57,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
   return (
     <div className={`min-h-screen flex flex-col p-8 transition-colors duration-500 ${isDark ? 'bg-slate-950 text-white' : 'bg-[#f8fafc] text-slate-900'}`}>
       
-      {/* Botão de Voltar no Topo */}
       <header className="absolute top-6 left-6 z-50">
         <button 
           onClick={() => navigate('/')}
@@ -66,7 +72,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
         <div className="inline-flex items-center justify-center size-14 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-600/30 mb-5">
           <span className="material-symbols-outlined text-[28px]">person_add</span>
         </div>
-        <h1 className="text-2xl font-[900] font-display tracking-tight leading-tight mb-2 uppercase italic">Sua Identidade</h1>
+        <h1 className="text-2xl font-[900] font-display tracking-tight leading-none mb-2 uppercase italic">Sua Identidade</h1>
         <p className="text-xs font-medium opacity-50 max-w-[280px] mx-auto leading-relaxed">
           Preencha os campos abaixo para iniciarmos nossa jornada de fé e razão.
         </p>
@@ -74,14 +80,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 pb-16 overflow-y-auto no-scrollbar">
         
-        {/* Campo 1: Nome */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4">Nome e sobrenome</label>
           <input 
             required
             value={fullName}
             onChange={e => setFullName(e.target.value)}
-            placeholder="Seu nome completo"
+            placeholder="Ex: Samuel Duarte"
             className={`w-full h-14 px-6 rounded-[20px] border-2 transition-all outline-none text-sm font-bold ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 focus:border-blue-500 text-white' 
@@ -90,30 +95,43 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
           />
         </div>
 
-        {/* Destaque do Pastor */}
-        <div 
-          onClick={() => setIsPastor(!isPastor)}
-          className={`mx-1 p-4 rounded-[24px] border-2 transition-all cursor-pointer flex items-center gap-4 ${
-            isPastor 
-              ? 'bg-amber-500/10 border-amber-500 shadow-lg shadow-amber-500/10' 
-              : (isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/50 border-slate-100')
-          }`}
-        >
-          <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${isPastor ? 'bg-amber-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-800'}`}>
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: isPastor ? "'FILL' 1" : "" }}>verified</span>
-          </div>
-          <div className="flex-1">
-            <h4 className={`text-[11px] font-black uppercase tracking-widest ${isPastor ? 'text-amber-600' : 'text-slate-400'}`}>
-              Sou Pastor / Liderança
-            </h4>
-            <p className="text-[9px] font-bold opacity-60">Toque aqui para validar sua autoridade no app</p>
-          </div>
-          <div className={`size-5 rounded-full border-2 flex items-center justify-center ${isPastor ? 'border-amber-500 bg-amber-500' : 'border-slate-300'}`}>
-            {isPastor && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
+        <div className="space-y-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Você possui um cargo de Liderança?</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div 
+              onClick={() => setLeadership(leadership === 'pastor' ? 'none' : 'pastor')}
+              className={`p-4 rounded-[24px] border-2 transition-all cursor-pointer flex flex-col items-center gap-2 text-center ${
+                leadership === 'pastor' 
+                  ? 'bg-amber-500/10 border-amber-500 shadow-lg shadow-amber-500/10 scale-[1.02]' 
+                  : (isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/50 border-slate-100')
+              }`}
+            >
+              <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${leadership === 'pastor' ? 'bg-amber-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-800'}`}>
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: leadership === 'pastor' ? "'FILL' 1" : "" }}>verified</span>
+              </div>
+              <h4 className={`text-[10px] font-black uppercase tracking-widest leading-tight ${leadership === 'pastor' ? 'text-amber-600' : 'text-slate-400'}`}>
+                Sou Pastor
+              </h4>
+            </div>
+
+            <div 
+              onClick={() => setLeadership(leadership === 'lider_juventude' ? 'none' : 'lider_juventude')}
+              className={`p-4 rounded-[24px] border-2 transition-all cursor-pointer flex flex-col items-center gap-2 text-center ${
+                leadership === 'lider_juventude' 
+                  ? 'bg-amber-500/10 border-amber-500 shadow-lg shadow-amber-500/10 scale-[1.02]' 
+                  : (isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/50 border-slate-100')
+              }`}
+            >
+              <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${leadership === 'lider_juventude' ? 'bg-amber-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-800'}`}>
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: leadership === 'lider_juventude' ? "'FILL' 1" : "" }}>verified</span>
+              </div>
+              <h4 className={`text-[10px] font-black uppercase tracking-widest leading-tight ${leadership === 'lider_juventude' ? 'text-amber-600' : 'text-slate-400'}`}>
+                Líder Juventude
+              </h4>
+            </div>
           </div>
         </div>
 
-        {/* Campo 2: Igreja */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4 flex items-baseline gap-1.5">
             Sua igreja <span className="text-[9px] lowercase font-bold opacity-40">(Nome completo)</span>
@@ -122,7 +140,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
             required
             value={churchName}
             onChange={e => setChurchName(e.target.value)}
-            placeholder="Ex: Igreja Batista em Goiânia"
+            placeholder="Ex: Igreja Batista Vibe"
             className={`w-full h-14 px-6 rounded-[20px] border-2 transition-all outline-none text-sm font-bold ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 focus:border-blue-500 text-white' 
@@ -131,7 +149,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
           />
         </div>
 
-        {/* Campo 3: WhatsApp */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4">WhatsApp (DDD + Número)</label>
           <input 
@@ -139,7 +156,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
             type="tel"
             value={whatsapp}
             onChange={e => setWhatsapp(e.target.value)}
-            placeholder="Ex: 62 99999-9999"
+            placeholder="62 99999-9999"
             className={`w-full h-14 px-6 rounded-[20px] border-2 transition-all outline-none text-sm font-bold ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 focus:border-blue-500 text-white' 
@@ -148,7 +165,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
           />
         </div>
 
-        {/* Campo 4: Estudante */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4 flex items-baseline gap-1.5">
             Estudante <span className="text-[9px] lowercase font-bold opacity-40">(Curso ou ano escolar)</span>
@@ -157,7 +173,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
             required
             value={education}
             onChange={e => setEducation(e.target.value)}
-            placeholder="Ex: Direito ou 9º ano"
+            placeholder="Ex: Engenharia Elétrica ou 2º Ensino médio"
             className={`w-full h-14 px-6 rounded-[20px] border-2 transition-all outline-none text-sm font-bold ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 focus:border-blue-500 text-white' 
@@ -166,7 +182,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ profile, onUpdate }) => {
           />
         </div>
 
-        {/* Campo 5: E-mail */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4">E-mail de acesso</label>
           <input 

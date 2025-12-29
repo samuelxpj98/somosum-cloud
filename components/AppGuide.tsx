@@ -45,7 +45,7 @@ const steps = [
     description: "Expressos: Os mais curtidos ditam o ritmo.\nAprofundar: Os com maior debate permanecem em alta.\nComentários: Os comentários com mais interações ficam sempre no topo.",
     icon: "analytics",
     color: "bg-amber-500",
-    image: "https://images.unsplash.com/photo-1551288049-bbbda536339a?auto=format&fit=crop&q=80&w=600"
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800"
   }
 ];
 

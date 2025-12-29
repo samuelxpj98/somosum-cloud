@@ -2,15 +2,17 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { UserProfile, Expresso } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { AVATAR_COLORS } from '../App';
 
 interface ProfileProps {
   profile: UserProfile;
   onUpdate: (profile: UserProfile) => void;
   readCount: number;
+  totalPostsCount: number;
   userPosts: Expresso[];
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPosts }) => {
+const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, totalPostsCount, userPosts }) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -24,12 +26,19 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
     readPostIds: profile?.readPostIds || [],
     loginCount: profile?.loginCount || 1,
     stats: profile?.stats || { daysInRow: 1, savedPosts: 0, writtenPosts: 0 },
-    avatarUrl: profile?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral",
+    avatarUrl: profile?.avatarUrl || "",
+    avatarColor: profile?.avatarColor || "#3B82F6",
     name: profile?.name || "Explorador",
     church: profile?.church || "Visitante",
     isPastor: !!profile?.isPastor,
+    leadershipRole: profile?.leadershipRole || (profile?.isPastor ? 'pastor' : 'none'),
     isDarkMode: !!profile?.isDarkMode
   }), [profile]);
+
+  const readPercentage = useMemo(() => {
+    if (!totalPostsCount || totalPostsCount === 0) return 0;
+    return Math.min(100, Math.round((readCount / totalPostsCount) * 100));
+  }, [readCount, totalPostsCount]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +67,14 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
   };
 
   const isDark = safeProfile.isDarkMode;
+  const hasPhoto = (isEditing ? editedProfile.avatarUrl : safeProfile.avatarUrl)?.length > 10;
+  const isLeader = safeProfile.leadershipRole !== 'none';
+
+  const getRoleLabel = () => {
+    if (safeProfile.leadershipRole === 'pastor') return 'Pastor';
+    if (safeProfile.leadershipRole === 'lider_juventude') return 'Líder Juventude';
+    return 'Membro';
+  };
 
   const savedPostsList = useMemo(() => {
     if (!userPosts) return [];
@@ -67,9 +84,8 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
   const displayedSavedPosts = savedPostsList.slice(0, 5);
 
   const handleLogout = () => {
-    // Não usamos clear() para não apagar dados do sistema, apenas a sessão do usuário
     localStorage.removeItem('user_profile');
-    localStorage.removeItem('read_posts');
+    localStorage.removeItem('somosum_sheets_cache_v4');
     window.location.href = '/';
   };
 
@@ -91,13 +107,25 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
       <main className="px-6 pt-8 space-y-6 animate-in fade-in duration-500">
         <section className={`p-6 rounded-[32px] border transition-all ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} flex items-center gap-5`}>
           <div className="relative" onClick={() => fileInputRef.current?.click()}>
-            <div className={`size-20 rounded-2xl p-0.5 bg-gradient-to-tr ${safeProfile.isPastor ? 'from-amber-400 to-orange-500' : 'from-blue-600 to-cyan-400'} shadow-lg transition-transform active:scale-95 overflow-hidden`}>
-              <img 
-                src={isEditing ? editedProfile.avatarUrl : safeProfile.avatarUrl} 
-                alt={safeProfile.name} 
-                className="size-full rounded-[14px] object-cover border-2 border-white" 
-                onError={(e) => { (e.target as HTMLImageElement).src = "https://api.dicebear.com/7.x/avataaars/svg?seed=neutral"; }}
-              />
+            <div 
+              className={`size-20 rounded-2xl p-0.5 shadow-lg transition-transform active:scale-95 overflow-hidden flex items-center justify-center text-white font-black text-2xl`}
+              style={{ 
+                backgroundColor: !hasPhoto ? (isEditing ? editedProfile.avatarColor : safeProfile.avatarColor) : 'transparent',
+                background: hasPhoto ? (isLeader ? 'linear-gradient(to tr, #fbbf24, #f97316)' : 'linear-gradient(to tr, #2563eb, #22d3ee)') : undefined
+              }}
+            >
+              {hasPhoto ? (
+                <img 
+                  src={isEditing ? editedProfile.avatarUrl : safeProfile.avatarUrl} 
+                  alt={safeProfile.name} 
+                  className="size-full rounded-[14px] object-cover border-2 border-white" 
+                />
+              ) : (
+                <span>{(isEditing ? editedProfile.name : safeProfile.name)?.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="absolute -bottom-1 -right-1 size-7 bg-blue-600 border-2 border-white rounded-full flex items-center justify-center text-white shadow-md">
+               <span className="material-symbols-outlined text-[16px]">add_a_photo</span>
             </div>
             <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
           </div>
@@ -107,13 +135,13 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
               <h2 className={`text-lg font-black truncate leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {safeProfile.name}
               </h2>
-              {safeProfile.isPastor && (
+              {isLeader && (
                 <span className="material-symbols-outlined text-amber-500 text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${safeProfile.isPastor ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
-                {safeProfile.isPastor ? 'Pastor' : 'Membro'}
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isLeader ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                {getRoleLabel()}
               </span>
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">
                 {safeProfile.church}
@@ -122,20 +150,38 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
           </div>
         </section>
 
+        {/* Seletor de Cores na Edição */}
+        {isEditing && !hasPhoto && (
+          <section className={`p-6 rounded-[32px] border animate-in slide-in-from-top-4 duration-500 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4 text-center">Escolha a cor do seu fundo</p>
+            <div className="grid grid-cols-6 gap-3">
+              {AVATAR_COLORS.map(color => (
+                <button 
+                  key={color}
+                  onClick={() => setEditedProfile({ ...editedProfile, avatarColor: color })}
+                  className={`size-8 rounded-lg border-2 transition-all active:scale-90 ${editedProfile.avatarColor === color ? 'border-white ring-2 ring-blue-600 scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="grid grid-cols-2 gap-4">
           <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} p-4 rounded-3xl border flex items-center gap-4 transition-colors`}>
-            <span className="material-symbols-outlined text-orange-500 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+            <span className="material-symbols-outlined text-orange-500 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>login</span>
             <div>
               <span className={`text-lg font-black block leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{safeProfile.loginCount || 1}</span>
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Fogo</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Acessou</span>
             </div>
           </div>
-          <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} p-4 rounded-3xl border flex items-center gap-4 transition-colors`}>
-            <span className="material-symbols-outlined text-indigo-500 text-2xl">menu_book</span>
-            <div>
-              <span className={`text-lg font-black block leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{readCount || 0}</span>
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Estudos</span>
+          <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} p-4 rounded-3xl border flex items-center gap-4 transition-colors relative overflow-hidden`}>
+            <span className="material-symbols-outlined text-indigo-500 text-2xl">task_alt</span>
+            <div className="z-10">
+              <span className={`text-lg font-black block leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{readPercentage}%</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Concluído</span>
             </div>
+            <div className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-1000" style={{ width: `${readPercentage}%` }}></div>
           </div>
         </section>
 
@@ -204,7 +250,10 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, userPos
               </div>
             ) : (
               displayedSavedPosts.map(post => (
-                <div key={post.id} onClick={() => navigate(`/aprofundar/${post.id}`)} className={`p-3.5 rounded-[24px] border transition-all active:scale-[0.98] flex items-center gap-4 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 shadow-sm text-slate-900'}`}>
+                <div key={post.id} onClick={() => {
+                  const path = post.categoryType === 'APROFUNDAR' ? 'aprofundar' : 'expresso';
+                  navigate(`/${path}/${post.id}`);
+                }} className={`p-3.5 rounded-[24px] border transition-all active:scale-[0.98] flex items-center gap-4 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 shadow-sm text-slate-900'}`}>
                   <img src={post.imageUrl} className="size-12 rounded-xl object-cover shadow-sm flex-shrink-0" alt="" />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-black truncate leading-tight">{post.title}</h4>

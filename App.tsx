@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
@@ -14,8 +13,9 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-const CACHE_KEY = 'somosum_sheets_cache_v6'; 
-const CACHE_EXPIRATION = 2 * 60 * 1000; 
+// Mudamos a versão v7 para v8 para forçar o navegador a ignorar tudo o que ele guardou antes
+const CACHE_KEY = 'somosum_v8_final'; 
+const CACHE_EXPIRATION = 30 * 1000; // 30 segundos de cache apenas durante a transição
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
@@ -196,6 +196,28 @@ const AppContentComponent: React.FC = () => {
     updateProfile({ savedPostIds: newSavedIds });
   };
 
+  const markAsRead = (id: string) => {
+    const currentRead = userProfile.readPostIds || [];
+    if (!currentRead.includes(id)) {
+      updateProfile({ readPostIds: [...currentRead, id] });
+    }
+  };
+
+  const toggleLikePost = (id: string) => {
+    const currentLiked = userProfile.likedPostIds || [];
+    const isLiked = currentLiked.includes(id);
+    const newLikedIds = isLiked ? currentLiked.filter(pid => pid !== id) : [...currentLiked, id];
+    updateProfile({ likedPostIds: newLikedIds });
+  };
+
+  const likeComment = async (postId: string, commentId: string) => {
+    const currentLikedComments = userProfile.likedCommentIds || [];
+    if (!currentLikedComments.includes(commentId)) {
+      await commentsService.likeComment(postId, commentId);
+      updateProfile({ likedCommentIds: [...currentLikedComments, commentId] });
+    }
+  };
+
   if (loading && sheetPosts.length === 0) return (
     <div className="flex h-screen items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-4">
@@ -212,10 +234,11 @@ const AppContentComponent: React.FC = () => {
         <Route path="/onboarding" element={<Onboarding profile={userProfile} onUpdate={updateProfile} />} />
         <Route path="/home" element={<ProtectedRoute profile={userProfile}><Home content={mergedContent} missions={dynamicMissions} /></ProtectedRoute>} />
         <Route path="/expresso" element={<ProtectedRoute profile={userProfile}><ExpressoPage content={mergedContent} readPostIds={userProfile.readPostIds} /></ProtectedRoute>} />
-        <Route path="/expresso/:id" element={<ProtectedRoute profile={userProfile}><ExpressoDetail content={mergedContent} onToggleSave={toggleSavePost} /></ProtectedRoute>} />
+        <Route path="/expresso/:id" element={<ProtectedRoute profile={userProfile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
         <Route path="/comunidade" element={<ProtectedRoute profile={userProfile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
-        <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds} userPosts={sheetPosts} /></ProtectedRoute>} />
-        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={userProfile}><AprofundarDetail content={mergedContent} onToggleSave={toggleSavePost} /></ProtectedRoute>} />
+        {/* Fix: Corrected typo 'readReadPostIds' to 'readPostIds' */}
+        <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds || []} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/aprofundar/:id" element={<ProtectedRoute profile={userProfile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute profile={userProfile}><Profile profile={userProfile} onUpdate={updateProfile} readCount={userProfile.readPostIds?.length || 0} totalPostsCount={sheetPosts.length} userPosts={sheetPosts} /></ProtectedRoute>} />
       </Routes>
       <BottomNav isDarkMode={userProfile.isDarkMode} profileComplete={userProfile.isProfileComplete} />

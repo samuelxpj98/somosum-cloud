@@ -25,6 +25,7 @@ const CommentItem: React.FC<{
   
   const replies = useMemo(() => allComments.filter(c => c.parentId === comment.id), [allComments, comment.id]);
   const alreadyLiked = useMemo(() => (profile.likedCommentIds || []).includes(comment.id), [profile.likedCommentIds, comment.id]);
+  const hasPhoto = comment.userAvatar && comment.userAvatar.length > 10;
 
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
@@ -32,6 +33,7 @@ const CommentItem: React.FC<{
       usuario: profile.name || "Explorador",
       texto: replyText,
       userAvatar: profile.avatarUrl,
+      userColor: profile.avatarColor || "#3B82F6",
       church: profile.church,
       parentId: comment.id,
       postTitle: comment.postTitle || "Comentário"
@@ -45,8 +47,15 @@ const CommentItem: React.FC<{
     <div className={`transition-all animate-in fade-in slide-in-from-left-4 duration-300 ${depth > 0 ? 'ml-4 mt-2 border-l-2 border-slate-200 dark:border-slate-700 pl-4' : 'mt-4'}`}>
       <div className={`p-4 rounded-[24px] border soft-shadow transition-all ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
         <div className="flex gap-3">
-          <div className="size-8 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-[8px] shrink-0 overflow-hidden">
-            {comment.userAvatar ? <img src={comment.userAvatar} className="size-full object-cover" /> : comment.usuario?.charAt(0)}
+          <div 
+            className={`size-8 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0 overflow-hidden shadow-inner`}
+            style={{ backgroundColor: !hasPhoto ? (comment.userColor || '#3B82F6') : '#1E293B' }}
+          >
+            {hasPhoto ? (
+              <img src={comment.userAvatar} className="size-full object-cover" />
+            ) : (
+              <span>{comment.usuario?.charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start">
@@ -139,6 +148,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
   const [realtimeComments, setRealtimeComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState('');
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const displayItem = useMemo(() => {
     return content.expressos.find((e: any) => e.id === id) || (content as any).sheetPosts?.find((e: any) => e.id === id);
@@ -152,12 +162,39 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
     return () => unsubscribe();
   }, [id]);
 
+  const handleShare = async () => {
+    if (!displayItem) return;
+
+    const shareData = {
+      title: `SomosUm: ${displayItem.title}`,
+      text: displayItem.subtitle || displayItem.title,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Erro ao compartilhar", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (err) {
+        console.error("Falha ao copiar", err);
+      }
+    }
+  };
+
   const handleSendComment = async () => {
     if (!commentText.trim() || !id || !displayItem) return;
     await commentsService.addComment(id, {
       usuario: content.profile.name || "Explorador",
       texto: commentText,
       userAvatar: content.profile.avatarUrl,
+      userColor: content.profile.avatarColor || "#3B82F6",
       church: content.profile.church,
       postTitle: displayItem.title
     });
@@ -177,6 +214,13 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-[#F1F5F9]'}`}>
+      
+      {showToast && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+          Link copiado para você enviar! 🔥
+        </div>
+      )}
+
       <section className="relative w-full h-[60vh] overflow-hidden">
         <img src={displayItem.imageUrl} className="absolute inset-0 w-full h-full object-cover animate-in fade-in zoom-in-110 duration-1000" alt={displayItem.title} />
         <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-10">
@@ -186,7 +230,10 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
           <div className="bg-black/30 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-full text-[12px] font-bold text-white uppercase tracking-[1.2px] flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">menu_book</span> {displayItem.readingTime}
           </div>
-          <button className="size-11 rounded-full bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all">
+          <button 
+            onClick={handleShare}
+            className="size-11 rounded-full bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all"
+          >
             <span className="material-symbols-outlined text-[24px]">share</span>
           </button>
         </header>
