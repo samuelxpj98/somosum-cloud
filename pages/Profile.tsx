@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo } from 'react';
 import { UserProfile, Expresso } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -7,12 +6,10 @@ import { AVATAR_COLORS } from '../App';
 interface ProfileProps {
   profile: UserProfile;
   onUpdate: (profile: UserProfile) => void;
-  readCount: number;
-  totalPostsCount: number;
   userPosts: Expresso[];
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, totalPostsCount, userPosts }) => {
+const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, userPosts }) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -35,10 +32,27 @@ const Profile: React.FC<ProfileProps> = ({ profile, onUpdate, readCount, totalPo
     isDarkMode: !!profile?.isDarkMode
   }), [profile]);
 
-  const readPercentage = useMemo(() => {
-    if (!totalPostsCount || totalPostsCount === 0) return 0;
-    return Math.min(100, Math.round((readCount / totalPostsCount) * 100));
-  }, [readCount, totalPostsCount]);
+  // Cálculo robusto da porcentagem de leitura
+  // Filtramos apenas posts que realmente existem no banco atual e que são "líveis" (EXPRESSO ou APROFUNDAR)
+  const { readCount, totalReadablePosts, readPercentage } = useMemo(() => {
+    if (!userPosts || userPosts.length === 0) return { readCount: 0, totalReadablePosts: 0, readPercentage: 0 };
+    
+    // Filtra apenas posts que podem ser lidos (ignora missões e outros tipos se existirem)
+    const readablePosts = userPosts.filter(p => p.categoryType === 'EXPRESSO' || p.categoryType === 'APROFUNDAR');
+    const total = readablePosts.length;
+    
+    // Conta quantos dos posts lidos pelo usuário realmente existem na lista atual
+    const readIdsSet = new Set(safeProfile.readPostIds);
+    const count = readablePosts.filter(p => readIdsSet.has(p.id)).length;
+    
+    const percentage = total > 0 ? Math.min(100, Math.round((count / total) * 100)) : 0;
+    
+    return { 
+      readCount: count, 
+      totalReadablePosts: total, 
+      readPercentage: percentage 
+    };
+  }, [safeProfile.readPostIds, userPosts]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

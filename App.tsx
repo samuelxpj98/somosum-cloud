@@ -236,10 +236,9 @@ const AppContentComponent: React.FC = () => {
         <Route path="/expresso" element={<ProtectedRoute profile={userProfile}><ExpressoPage content={mergedContent} readPostIds={userProfile.readPostIds} /></ProtectedRoute>} />
         <Route path="/expresso/:id" element={<ProtectedRoute profile={userProfile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
         <Route path="/comunidade" element={<ProtectedRoute profile={userProfile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
-        {/* Fix: Corrected typo 'readReadPostIds' to 'readPostIds' */}
         <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds || []} userPosts={sheetPosts} /></ProtectedRoute>} />
         <Route path="/aprofundar/:id" element={<ProtectedRoute profile={userProfile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute profile={userProfile}><Profile profile={userProfile} onUpdate={updateProfile} readCount={userProfile.readPostIds?.length || 0} totalPostsCount={sheetPosts.length} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute profile={userProfile}><Profile profile={userProfile} onUpdate={updateProfile} userPosts={sheetPosts} /></ProtectedRoute>} />
       </Routes>
       <BottomNav isDarkMode={userProfile.isDarkMode} profileComplete={userProfile.isProfileComplete} />
     </div>
