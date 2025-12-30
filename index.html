@@ -22,7 +22,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/bible.png">
     <link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/fluency/167/bible.png">
 
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography,line-clamp"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Lora:ital,wght@1,400&display=swap" rel="stylesheet">
@@ -58,12 +58,11 @@
         color: var(--text-body);
         overflow-x: hidden;
         line-height: 1.6;
-        touch-action: manipulation; /* Melhora resposta ao toque */
+        touch-action: manipulation;
         -webkit-text-size-adjust: 100%;
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* Estilo para ocupar a área do Notch do iPhone */
       @supports (padding: env(safe-area-inset-top)) {
         header {
           padding-top: calc(1.25rem + env(safe-area-inset-top)) !important;
@@ -80,6 +79,21 @@
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .soft-shadow { box-shadow: 0 4px 20px -2px rgba(30, 41, 59, 0.05); }
+
+      /* Fix para Safari iOS: line-clamp sumindo com texto */
+      .line-clamp-2 {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+      
+      .line-clamp-1 {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 1 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
 
       .prose h1, .prose h2, .prose h3, .prose h4, .prose strong {
         color: inherit;
@@ -103,7 +117,6 @@
     }
     </script>
     <script>
-      // Evita o scroll elástico e zoom indesejado
       document.addEventListener('gesturestart', function(e) {
         e.preventDefault();
       });

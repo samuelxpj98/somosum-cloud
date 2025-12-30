@@ -16,7 +16,6 @@ export const FIXED_CATEGORIES = [
 
 const calculateLValue = (text: string): number => {
   if (!text) return 0;
-  // Fix: Explicitly type urls as string[] to avoid 'never' type inference
   const urls: string[] = text.match(/https?:\/\/[^\s]+/g) || [];
   const bibleRefRegex = /(?:[123]\s)?(?:Gên|Êxo|Lev|Nâm|Deu|Jos|Juí|Rut|1Sm|2Sm|1Rs|2Rs|1Cr|2Cr|Esd|Nee|Est|Jó|Sal|Pro|Ecl|Can|Isa|Jer|Lam|Eze|Dan|Ose|Joe|Amó|Oba|Jon|Miq|Naú|Hab|Sof|Age|Zac|Mal|Mat|Mar|Luc|João|Atos|Rom|1Co|2Co|Gál|Efe|Fil|Col|1Te|2Te|1Ti|2Ti|Tit|Flm|Heb|Tia|1Pe|2Pe|1Jo|2Jo|3Jo|Jud|Apo)\.?\s\d+/gi;
   const hasBibleRef = bibleRefRegex.test(text);
@@ -56,10 +55,10 @@ const DetailedArticleCard: React.FC<{
   return (
     <div 
       onClick={() => navigate(`/aprofundar/${item.id}`)}
-      className={`rounded-[40px] overflow-hidden shadow-2xl mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700 relative aspect-[16/11] cursor-pointer group border-4 ${isDark ? 'border-slate-800' : 'border-white'}`}
+      className={`rounded-[40px] overflow-hidden shadow-2xl mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700 relative aspect-[16/11] cursor-pointer group border-4 ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-900`}
     >
-      <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+      <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90" alt={item.title} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
       
       {rank !== undefined && (
         <div className="absolute top-6 left-6 z-30 bg-orange-500 text-white size-10 rounded-2xl flex items-center justify-center font-black text-lg shadow-xl shadow-orange-600/40 border border-white/20 animate-in zoom-in-50 duration-500">
@@ -74,7 +73,7 @@ const DetailedArticleCard: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-8 z-10 bg-gradient-to-t from-black/70 to-transparent">
         <div className="flex items-center gap-3 mb-3">
           <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
             {item.categoryFull || item.category}
@@ -83,8 +82,8 @@ const DetailedArticleCard: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h2 className="text-[28px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter">
-          {item.title}
+        <h2 className="text-[28px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter min-h-[1.1em] line-clamp-2">
+          {item.title || "Estudo"}
         </h2>
         {item.subtitle && (
           <p className="text-[13px] font-medium text-white/80 line-clamp-2 italic">
@@ -114,14 +113,12 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
       const postComments = allComments.filter(c => c.postId === item.id);
       const C = postComments.length;
       const L = calculateLValue(item.content);
-      const V = 0;
-      // Fix: Use item.timestamp instead of item.hora, as Expresso objects use timestamp for creation time
       const T = Math.max(1, (now - (item.timestamp || now - 86400000)) / 3600000);
-      const score = ((C * 5) + (L * 5) + (V * 1)) / Math.pow(T, 1.3);
-      return { ...item, score };
+      const score = ((C * 5) + (L * 5)) / Math.pow(T, 1.3);
+      return { ...item, score: (isNaN(score) || !isFinite(score)) ? 0 : score };
     });
 
-    const sortedByScore = [...scored].sort((a, b) => b.score - a.score);
+    const sortedByScore = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0));
     const trendingItems = sortedByScore.slice(0, 4);
     const trendingIds = trendingItems.map(i => i.id);
     
@@ -184,14 +181,14 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
           </div>
           <div className="grid grid-cols-2 gap-4">
             {recent.map(item => (
-              <div key={item.id} onClick={() => window.location.hash = `/aprofundar/${item.id}`} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'}`}>
-                <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
+              <div key={item.id} onClick={() => window.location.hash = `/aprofundar/${item.id}`} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-800`}>
+                <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90" alt={item.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-t from-black/60 to-transparent">
                   <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
                     {item.category}
                   </span>
-                  <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2">{item.title}</h4>
+                  <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2 min-h-[1.2em]">{item.title || "Estudo"}</h4>
                 </div>
               </div>
             ))}

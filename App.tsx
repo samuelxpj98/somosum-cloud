@@ -96,7 +96,12 @@ const AppContentComponent: React.FC = () => {
         if (!res.ok) throw new Error("Falha na rede");
         
         const tsvText = await res.text();
-        const cleanTsv = tsvText.replace(/^\uFEFF/, '').replace(/\r/g, '');
+        // Limpeza agressiva de TSV para garantir que não haja caracteres fantasmas
+        const cleanTsv = tsvText
+          .replace(/^\uFEFF/, '') // BOM
+          .split('\r\n').join('\n') // Windows CRLF
+          .split('\r').join('\n'); // Mac CR
+
         const lines = cleanTsv.split('\n').filter(line => line.trim() !== "");
         const rows = lines.slice(1);
         
@@ -105,7 +110,8 @@ const AppContentComponent: React.FC = () => {
 
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
-          if (!parts[0]) return; 
+          const postTitle = parts[0];
+          if (!postTitle) return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
           let tipo = "EXPRESSO";
@@ -116,14 +122,13 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
-            // Coluna J (9) - Título | Coluna K (10) - Texto
             const analogyTitleFromSheet = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
             const analogyTextFromSheet = parts[10];
-            const hasAnalogy = analogyTextFromSheet && analogyTextFromSheet.length > 3;
+            const hasAnalogy = analogyTextFromSheet && analogyTextFromSheet.length > 2;
 
             allPosts.push({
               id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
-              title: parts[0],
+              title: postTitle,
               content: (parts[1] || "").replace(/\\n/g, '\n'),
               imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
               category: parts[3] || "GERAL",
@@ -134,7 +139,7 @@ const AppContentComponent: React.FC = () => {
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
-              timestamp: Date.now() - (index * 3600000), // Simula ordem cronológica para o ranking
+              timestamp: Date.now() - (index * 3600000), 
               analogy: hasAnalogy ? {
                 icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
                 title: analogyTitleFromSheet,

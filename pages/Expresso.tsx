@@ -39,9 +39,9 @@ const Card: React.FC<{
   return (
     <div 
       onClick={() => navigate(`/expresso/${item.id}`)}
-      className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5`}
+      className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5 bg-slate-800`}
     >
-      <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+      <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent transition-opacity group-hover:opacity-90"></div>
       
       {rank !== undefined && (
@@ -57,7 +57,7 @@ const Card: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10 bg-gradient-to-t from-black/60 to-transparent">
         <div className="flex items-center gap-2 mb-2">
           <span className={`${getCategoryColor(item.category)} text-white px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm`}>
             {item.category}
@@ -66,8 +66,8 @@ const Card: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h4 className="text-[15px] font-[900] text-white leading-[1.2] tracking-tight font-display">
-          {item.title}
+        <h4 className="text-[15px] font-[900] text-white leading-[1.2] tracking-tight font-display min-h-[1.2em] line-clamp-2">
+          {item.title || "Sem Título"}
         </h4>
       </div>
     </div>
@@ -93,12 +93,12 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
       const postComments = allComments.filter(c => c.postId === item.id);
       const C = postComments.length;
       const L = calculateLValue(item.content);
-      // Fix: Removed unnecessary (item as any) cast since timestamp is now on the Expresso interface
       const postTimestamp = item.timestamp || (now - 86400000);
-      const T = Math.max(1, (now - postTimestamp) / 3600000); // Horas desde postagem
+      // Proteção: T deve ser pelo menos 1 para não explodir o cálculo de score
+      const T = Math.max(1, (now - postTimestamp) / 3600000); 
       
       const score = ((C * 4) + (L * 2)) / Math.pow(T, 1.2);
-      return { ...item, score: isNaN(score) ? 0 : score };
+      return { ...item, score: (isNaN(score) || !isFinite(score)) ? 0 : score };
     });
 
     const sortedByScore = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0));
