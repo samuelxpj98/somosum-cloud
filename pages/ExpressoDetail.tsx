@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
@@ -30,6 +31,7 @@ const CommentItem: React.FC<{
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
     await commentsService.addComment(postId, {
+      userId: profile.id, // ID do autor da resposta
       usuario: profile.name || "Explorador",
       texto: replyText,
       userAvatar: profile.avatarUrl,
@@ -199,6 +201,7 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
   const handleSendComment = async () => {
     if (!commentText.trim() || !id || !item) return;
     await commentsService.addComment(id, {
+      userId: content.profile.id, // Adicionado aqui
       usuario: content.profile.name || "Explorador",
       texto: commentText,
       userAvatar: content.profile.avatarUrl,

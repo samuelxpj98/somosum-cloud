@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, push, set, update, increment, query, limitToLast, orderByChild, get, equalTo } from "firebase/database";
+import { getDatabase, ref, onValue, push, set, update, increment, query, limitToLast, orderByChild, get, remove } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbbFk3QJcyplWicP9RtQwo1U2Vz2YyeOA",
@@ -16,7 +16,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
-// Função auxiliar para tornar o e-mail um caminho válido no Firebase
 const encodeEmailPath = (email: string) => email.toLowerCase().trim().replace(/\./g, ',');
 
 export const userService = {
@@ -37,26 +36,19 @@ export const userService = {
       isProfileComplete: true
     };
     
-    // 1. Salva o perfil do usuário
     await update(ref(db, `users/${userId}`), normalizedData);
-    
-    // 2. Cria um atalho de busca por e-mail (MUITO MAIS RÁPIDO E SEGURO)
     if (encodedEmail) {
       await set(ref(db, `email_lookup/${encodedEmail}`), userId);
     }
-    
     return normalizedData;
   },
 
   findUserByEmail: async (email: string) => {
     if (!email) return null;
     const encodedEmail = encodeEmailPath(email);
-    
     try {
-      // Tentativa 1: Busca pelo atalho direto (Otimizado)
       const lookupRef = ref(db, `email_lookup/${encodedEmail}`);
       const lookupSnapshot = await get(lookupRef);
-      
       if (lookupSnapshot.exists()) {
         const userId = lookupSnapshot.val();
         const userRef = ref(db, `users/${userId}`);
@@ -65,8 +57,6 @@ export const userService = {
           return { ...userSnapshot.val(), id: userId };
         }
       }
-
-      // Tentativa 2: Fallback se o e-mail foi cadastrado antes dessa atualização
       const usersRef = ref(db, 'users');
       const allUsersSnapshot = await get(usersRef);
       if (allUsersSnapshot.exists()) {
@@ -75,30 +65,42 @@ export const userService = {
           const uEmail = allUsers[id].email || "";
           return uEmail.toLowerCase().trim() === email.toLowerCase().trim();
         });
-        
         if (foundId) {
-          // Aproveita e já cria o atalho para a próxima vez ser instantâneo
           await set(ref(db, `email_lookup/${encodedEmail}`), foundId);
           return { ...allUsers[foundId], id: foundId };
         }
       }
     } catch (error: any) {
       console.error("Erro no Firebase:", error);
-      // Se for erro de permissão, lançamos uma mensagem clara
-      if (error.message.includes('permission_denied')) {
-        throw new Error("O banco de dados recusou a busca. Tente cadastrar novamente ou entre em contato.");
-      }
-      throw new Error("Falha na rede. Tente novamente.");
+      throw new Error("Falha na rede.");
     }
     return null;
+  }
+};
+
+export const notificationsService = {
+  subscribe: (userId: string, callback: (notifications: any[]) => void) => {
+    const notifRef = ref(db, `notifications/${userId}`);
+    return onValue(notifRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return callback([]);
+      const list = Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val }))
+        .sort((a, b) => b.timestamp - a.timestamp);
+      callback(list);
+    });
+  },
+  markAsRead: (userId: string, notificationId: string) => {
+    return update(ref(db, `notifications/${userId}/${notificationId}`), { read: true });
+  },
+  delete: (userId: string, notificationId: string) => {
+    return remove(ref(db, `notifications/${userId}/${notificationId}`));
   }
 };
 
 export const commentsService = {
   subscribeToComments: (postId: string, callback: (comments: any[]) => void) => {
     const commentsRef = ref(db, 'conversas/' + postId);
-    const q = query(commentsRef, limitToLast(50));
-    
+    const q = query(commentsRef, limitToLast(100));
     return onValue(q, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -119,18 +121,12 @@ export const commentsService = {
     return onValue(commentsRef, (snapshot) => {
       const data = snapshot.val();
       if (!data) return callback([]);
-      
       const flattened: any[] = [];
       Object.keys(data).forEach(postId => {
         Object.entries(data[postId]).forEach(([commentId, comment]: [string, any]) => {
-          flattened.push({
-            id: commentId,
-            postId,
-            ...comment
-          });
+          flattened.push({ id: commentId, postId, ...comment });
         });
       });
-      
       const sorted = flattened.sort((a, b) => (b.hora || 0) - (a.hora || 0)).slice(0, 50);
       callback(sorted);
     });
@@ -139,17 +135,43 @@ export const commentsService = {
   addComment: async (postId: string, comment: any) => {
     const commentsRef = ref(db, 'conversas/' + postId);
     const newCommentRef = push(commentsRef);
-    return set(newCommentRef, {
+    const commentData = {
       ...comment,
       likes: 0,
       hora: Date.now()
-    });
+    };
+    
+    await set(newCommentRef, commentData);
+
+    // Lógica de Notificação de Resposta
+    if (comment.parentId) {
+      try {
+        const parentSnapshot = await get(ref(db, `conversas/${postId}/${comment.parentId}`));
+        if (parentSnapshot.exists()) {
+          const parentComment = parentSnapshot.val();
+          // Notificar apenas se não for o próprio autor respondendo a si mesmo
+          if (parentComment.userId && parentComment.userId !== comment.userId) {
+            const notifRef = ref(db, `notifications/${parentComment.userId}`);
+            push(notifRef, {
+              type: 'reply',
+              senderName: comment.usuario,
+              text: comment.texto.substring(0, 100),
+              postId: postId,
+              postTitle: comment.postTitle || "Seu comentário",
+              timestamp: Date.now(),
+              read: false
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao gerar notificação:", e);
+      }
+    }
+    return newCommentRef;
   },
 
   likeComment: async (postId: string, commentId: string) => {
     const commentRef = ref(db, `conversas/${postId}/${commentId}`);
-    return update(commentRef, {
-      likes: increment(1)
-    });
+    return update(commentRef, { likes: increment(1) });
   }
 };

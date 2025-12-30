@@ -1,9 +1,10 @@
 
 export interface Comment {
   id: string;
+  userId: string; // Adicionado para saber quem notificar
   usuario: string;
   userAvatar: string;
-  userColor?: string; // Cor do avatar do usuário
+  userColor?: string; 
   church: string;
   texto: string;
   likes: number;
@@ -11,6 +12,17 @@ export interface Comment {
   postId?: string;
   parentId?: string;
   postTitle?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: 'reply' | 'like' | 'system';
+  senderName: string;
+  text: string;
+  postId: string;
+  postTitle: string;
+  timestamp: number;
+  read: boolean;
 }
 
 export interface ResourceLink {
@@ -54,7 +66,7 @@ export interface UserProfile {
   whatsapp: string;
   education: string;
   isPastor: boolean;
-  leadershipRole?: 'pastor' | 'lider_juventude' | 'none'; // Nova diferenciação
+  leadershipRole?: 'pastor' | 'lider_juventude' | 'none';
   isDarkMode: boolean;
   isProfileComplete: boolean;
   role: 'user' | 'admin';
