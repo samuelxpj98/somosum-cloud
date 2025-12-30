@@ -41,8 +41,8 @@ const Card: React.FC<{
       onClick={() => navigate(`/expresso/${item.id}`)}
       className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5 bg-slate-800`}
     >
-      <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent transition-opacity group-hover:opacity-90"></div>
+      <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent transition-opacity group-hover:opacity-90"></div>
       
       {rank !== undefined && (
         <div className="absolute top-4 left-4 z-30 bg-orange-500 text-white size-8 rounded-xl flex items-center justify-center font-black shadow-lg shadow-orange-600/40 border border-white/20">
@@ -57,7 +57,7 @@ const Card: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-5 z-10 bg-gradient-to-t from-black/60 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
         <div className="flex items-center gap-2 mb-2">
           <span className={`${getCategoryColor(item.category)} text-white px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm`}>
             {item.category}
@@ -66,8 +66,8 @@ const Card: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h4 className="text-[15px] font-[900] text-white leading-[1.2] tracking-tight font-display min-h-[1.2em] line-clamp-2">
-          {item.title || "Sem Título"}
+        <h4 className="text-[14px] font-[900] text-white leading-tight tracking-tight font-display line-clamp-2 block overflow-hidden">
+          {item.title}
         </h4>
       </div>
     </div>
@@ -94,11 +94,14 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
       const C = postComments.length;
       const L = calculateLValue(item.content);
       const postTimestamp = item.timestamp || (now - 86400000);
-      // Proteção: T deve ser pelo menos 1 para não explodir o cálculo de score
-      const T = Math.max(1, (now - postTimestamp) / 3600000); 
       
-      const score = ((C * 4) + (L * 2)) / Math.pow(T, 1.2);
-      return { ...item, score: (isNaN(score) || !isFinite(score)) ? 0 : score };
+      // Proteção contra divisões por zero ou valores absurdos
+      const T_hours = Math.max(1, (now - postTimestamp) / 3600000); 
+      
+      const rawScore = ((C * 4) + (L * 2)) / Math.pow(T_hours, 1.2);
+      const score = (isNaN(rawScore) || !isFinite(rawScore)) ? 0 : rawScore;
+      
+      return { ...item, score };
     });
 
     const sortedByScore = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -107,7 +110,7 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
     
     const recentItems = scored
       .filter(item => !trendingIds.includes(item.id))
-      .sort((a, b) => b.id.localeCompare(a.id));
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     return { 
       trending: trendingItems, 

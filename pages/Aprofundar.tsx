@@ -73,7 +73,7 @@ const DetailedArticleCard: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-8 z-10 bg-gradient-to-t from-black/70 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
         <div className="flex items-center gap-3 mb-3">
           <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
             {item.categoryFull || item.category}
@@ -82,11 +82,11 @@ const DetailedArticleCard: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h2 className="text-[28px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter min-h-[1.1em] line-clamp-2">
-          {item.title || "Estudo"}
+        <h2 className="text-[24px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter line-clamp-2 block overflow-hidden">
+          {item.title}
         </h2>
         {item.subtitle && (
-          <p className="text-[13px] font-medium text-white/80 line-clamp-2 italic">
+          <p className="text-[13px] font-medium text-white/80 line-clamp-1 italic block overflow-hidden">
             "{item.subtitle}"
           </p>
         )}
@@ -96,6 +96,8 @@ const DetailedArticleCard: React.FC<{
 };
 
 const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; content: any }> = ({ userPosts, readPostIds, content }) => {
+  // Added useNavigate hook to fix the 'navigate' undefined error
+  const navigate = useNavigate();
   const [allComments, setAllComments] = useState<any[]>([]);
   const [showAllRecent, setShowAllRecent] = useState(false);
   const isDark = content.profile.isDarkMode;
@@ -107,15 +109,21 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
 
   const { trending, recent } = useMemo(() => {
     const studies = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
+    if (studies.length === 0) return { trending: [], recent: [] };
+
     const now = Date.now();
     
     const scored = studies.map(item => {
       const postComments = allComments.filter(c => c.postId === item.id);
       const C = postComments.length;
       const L = calculateLValue(item.content);
-      const T = Math.max(1, (now - (item.timestamp || now - 86400000)) / 3600000);
-      const score = ((C * 5) + (L * 5)) / Math.pow(T, 1.3);
-      return { ...item, score: (isNaN(score) || !isFinite(score)) ? 0 : score };
+      const postTimestamp = item.timestamp || (now - 86400000);
+
+      const T_hours = Math.max(1, (now - postTimestamp) / 3600000);
+      const rawScore = ((C * 5) + (L * 5)) / Math.pow(T_hours, 1.3);
+      const score = (isNaN(rawScore) || !isFinite(rawScore)) ? 0 : rawScore;
+
+      return { ...item, score };
     });
 
     const sortedByScore = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -124,7 +132,7 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
     
     const recentItems = scored
       .filter(item => !trendingIds.includes(item.id))
-      .sort((a, b) => b.id.localeCompare(a.id));
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     return { 
       trending: trendingItems, 
@@ -147,53 +155,62 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
           </p>
         </section>
 
-        <section>
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-              <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
-            </div>
-            <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
-              Artigos com mais reflexões, curtidas e comentários.
-            </p>
-          </div>
-          <div className="space-y-6">
-            {trending.map((item, index) => (
-              <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
-              <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
-            </div>
-            {(content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR').length > 4 && (
-              <button 
-                onClick={() => setShowAllRecent(!showAllRecent)}
-                className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
-              >
-                {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {recent.map(item => (
-              <div key={item.id} onClick={() => window.location.hash = `/aprofundar/${item.id}`} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-800`}>
-                <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90" alt={item.title} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-t from-black/60 to-transparent">
-                  <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
-                    {item.category}
-                  </span>
-                  <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2 min-h-[1.2em]">{item.title || "Estudo"}</h4>
+        {trending.length === 0 ? (
+          <section className="py-20 text-center opacity-40">
+            <span className="material-symbols-outlined text-6xl">menu_book</span>
+            <p className="text-xs font-black uppercase mt-4">Nenhum estudo encontrado na planilha.</p>
+          </section>
+        ) : (
+          <>
+            <section>
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="material-symbols-outlined text-orange-500 text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                  <h3 className="text-lg font-black uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Alta Moagem Fina</h3>
                 </div>
+                <p className="text-[10px] text-slate-400 font-medium ml-9 italic">
+                  Artigos com mais reflexões, curtidas e comentários.
+                </p>
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="space-y-6">
+                {trending.map((item, index) => (
+                  <DetailedArticleCard key={item.id} item={item} isRead={readPostIds.includes(item.id)} isDark={isDark} rank={index + 1} />
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+                  <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
+                </div>
+                {content.sheetPosts?.filter((p: any) => p.categoryType === 'APROFUNDAR').length > 4 && (
+                  <button 
+                    onClick={() => setShowAllRecent(!showAllRecent)}
+                    className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
+                  >
+                    {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {recent.map(item => (
+                  <div key={item.id} onClick={() => navigate(`/aprofundar/${item.id}`)} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-800`}>
+                    <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" alt={item.title} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                      <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
+                        {item.category}
+                      </span>
+                      <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2 block overflow-hidden">{item.title}</h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

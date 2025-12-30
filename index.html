@@ -80,12 +80,13 @@
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .soft-shadow { box-shadow: 0 4px 20px -2px rgba(30, 41, 59, 0.05); }
 
-      /* Fix para Safari iOS: line-clamp sumindo com texto */
+      /* Fix CRÍTICO para Safari iOS: garante que títulos line-clamp apareçam */
       .line-clamp-2 {
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
+        white-space: normal !important;
       }
       
       .line-clamp-1 {
@@ -93,6 +94,7 @@
         -webkit-line-clamp: 1 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
+        white-space: normal !important;
       }
 
       .prose h1, .prose h2, .prose h3, .prose h4, .prose strong {

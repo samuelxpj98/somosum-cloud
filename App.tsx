@@ -96,11 +96,10 @@ const AppContentComponent: React.FC = () => {
         if (!res.ok) throw new Error("Falha na rede");
         
         const tsvText = await res.text();
-        // Limpeza agressiva de TSV para garantir que não haja caracteres fantasmas
         const cleanTsv = tsvText
-          .replace(/^\uFEFF/, '') // BOM
-          .split('\r\n').join('\n') // Windows CRLF
-          .split('\r').join('\n'); // Mac CR
+          .replace(/^\uFEFF/, '') 
+          .split('\r\n').join('\n') 
+          .split('\r').join('\n'); 
 
         const lines = cleanTsv.split('\n').filter(line => line.trim() !== "");
         const rows = lines.slice(1);
@@ -111,7 +110,7 @@ const AppContentComponent: React.FC = () => {
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
           const postTitle = parts[0];
-          if (!postTitle) return; 
+          if (!postTitle || postTitle === "") return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
           let tipo = "EXPRESSO";
@@ -139,7 +138,7 @@ const AppContentComponent: React.FC = () => {
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
-              timestamp: Date.now() - (index * 3600000), 
+              timestamp: Date.now() - (index * 60000), 
               analogy: hasAnalogy ? {
                 icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
                 title: analogyTitleFromSheet,
