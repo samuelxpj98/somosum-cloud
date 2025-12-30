@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
 import Landing from './pages/Landing';
@@ -14,8 +14,10 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-const CACHE_KEY = 'somosum_v9_final'; 
-const CACHE_EXPIRATION = 60 * 1000; 
+// CHAVE DE CACHE ATUALIZADA - Força a limpeza de qualquer dado antigo (fakes)
+const CACHE_KEY = 'somosum_v13_absolute_clean'; 
+const APP_VERSION = '13.0';
+const CACHE_EXPIRATION = 30 * 1000; // 30 segundos para ser bem agressivo na atualização
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
@@ -109,8 +111,10 @@ const AppContentComponent: React.FC = () => {
 
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
-          const postTitle = parts[0];
-          if (!postTitle || postTitle === "") return; 
+          const postTitle = (parts[0] || "").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+          
+          // Pular linhas vazias ou headers fantasmas
+          if (!postTitle || postTitle.length < 2 || postTitle.toLowerCase() === 'título') return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
           let tipo = "EXPRESSO";
@@ -138,7 +142,7 @@ const AppContentComponent: React.FC = () => {
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
-              timestamp: Date.now() - (index * 60000), 
+              timestamp: Date.now() - (index * 10000), 
               analogy: hasAnalogy ? {
                 icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
                 title: analogyTitleFromSheet,
@@ -152,19 +156,27 @@ const AppContentComponent: React.FC = () => {
       }
     }));
 
-    if (allPosts.length > 0) {
-      setSheetPosts(allPosts);
-      setDynamicMissions(allMissions);
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ 
-        posts: allPosts, 
-        missions: allMissions, 
-        timestamp: Date.now() 
-      }));
-    }
+    // SÓ ATUALIZA SE HOUVER DADOS REAIS
+    setSheetPosts(allPosts);
+    setDynamicMissions(allMissions);
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ 
+      posts: allPosts, 
+      missions: allMissions, 
+      timestamp: Date.now() 
+    }));
     setLoading(false);
   };
 
   useEffect(() => {
+    // RESET TOTAL DE CACHE PARA GARANTIR QUE OS FAKES SUMAM
+    const lastVer = localStorage.getItem('app_version_somosum');
+    if (lastVer !== APP_VERSION) {
+      localStorage.clear();
+      localStorage.setItem('app_version_somosum', APP_VERSION);
+      window.location.reload();
+      return;
+    }
+
     const initializeApp = async () => {
       const savedProfile = localStorage.getItem('user_profile');
       if (savedProfile) {
@@ -172,16 +184,12 @@ const AppContentComponent: React.FC = () => {
           const profile = JSON.parse(savedProfile);
           const updatedProfile = { 
             ...profile, 
-            loginCount: (profile.loginCount || 0) + 1,
             readPostIds: Array.isArray(profile.readPostIds) ? profile.readPostIds : []
           };
           setUserProfile(updatedProfile);
-          localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
-          if (updatedProfile.isProfileComplete) userService.saveProfile(updatedProfile.id, updatedProfile).catch(console.error);
-          
           if (location.pathname === '/') navigate('/home', { replace: true });
         } catch (e) {
-          console.error("Erro ao processar perfil salvo", e);
+          console.error("Erro perfil", e);
         }
       }
 
@@ -256,10 +264,10 @@ const AppContentComponent: React.FC = () => {
   };
 
   if (loading && sheetPosts.length === 0) return (
-    <div className="flex h-screen items-center justify-center bg-slate-50">
+    <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Limpando e Sincronizando...</p>
       </div>
     </div>
   );
@@ -273,7 +281,7 @@ const AppContentComponent: React.FC = () => {
         <Route path="/expresso" element={<ProtectedRoute profile={userProfile}><ExpressoPage content={mergedContent} readPostIds={userProfile.readPostIds} /></ProtectedRoute>} />
         <Route path="/expresso/:id" element={<ProtectedRoute profile={userProfile}><ExpressoDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
         <Route path="/comunidade" element={<ProtectedRoute profile={userProfile}><Comunidade content={mergedContent} /></ProtectedRoute>} />
-        <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds || []} userPosts={sheetPosts} /></ProtectedRoute>} />
+        <Route path="/aprofundar" element={<ProtectedRoute profile={userProfile}><Aprofundar content={mergedContent} readPostIds={userProfile.readPostIds || []} /></ProtectedRoute>} />
         <Route path="/aprofundar/:id" element={<ProtectedRoute profile={userProfile}><AprofundarDetail content={mergedContent} markAsRead={markAsRead} onToggleSave={toggleSavePost} onToggleLike={toggleLikePost} onLikeComment={likeComment} /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute profile={userProfile}><Profile profile={userProfile} onUpdate={updateProfile} userPosts={sheetPosts} /></ProtectedRoute>} />
       </Routes>

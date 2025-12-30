@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContent, Expresso } from '../types';
@@ -39,10 +38,10 @@ const Card: React.FC<{
   return (
     <div 
       onClick={() => navigate(`/expresso/${item.id}`)}
-      className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5 bg-slate-800`}
+      className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5 bg-slate-900`}
     >
       <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent transition-opacity group-hover:opacity-90"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent transition-opacity group-hover:opacity-90"></div>
       
       {rank !== undefined && (
         <div className="absolute top-4 left-4 z-30 bg-orange-500 text-white size-8 rounded-xl flex items-center justify-center font-black shadow-lg shadow-orange-600/40 border border-white/20">
@@ -57,7 +56,7 @@ const Card: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex items-center gap-2 mb-2">
           <span className={`${getCategoryColor(item.category)} text-white px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm`}>
             {item.category}
@@ -66,7 +65,7 @@ const Card: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h4 className="text-[14px] font-[900] text-white leading-tight tracking-tight font-display line-clamp-2 block overflow-hidden">
+        <h4 className="text-[14px] font-[900] text-white leading-tight tracking-tight font-display line-clamp-2 block overflow-hidden min-h-[1.2em]">
           {item.title}
         </h4>
       </div>
@@ -95,9 +94,8 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
       const L = calculateLValue(item.content);
       const postTimestamp = item.timestamp || (now - 86400000);
       
-      // Proteção contra divisões por zero ou valores absurdos
+      // Proteção contra divisão por zero e NaN para Safari
       const T_hours = Math.max(1, (now - postTimestamp) / 3600000); 
-      
       const rawScore = ((C * 4) + (L * 2)) / Math.pow(T_hours, 1.2);
       const score = (isNaN(rawScore) || !isFinite(rawScore)) ? 0 : rawScore;
       

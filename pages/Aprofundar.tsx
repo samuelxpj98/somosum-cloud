@@ -5,42 +5,31 @@ import { Expresso } from '../types';
 import Header from '../components/Header';
 import { commentsService } from '../lib/firebase';
 
+// Adicionado export FIXED_CATEGORIES para ser usado no editor
 export const FIXED_CATEGORIES = [
-  { label: 'Todos', icon: 'grid_view' },
+  { label: 'Todos', icon: 'apps' },
   { label: 'Fé e Ciência', icon: 'science' },
-  { label: 'História', icon: 'history_edu' },
-  { label: 'Filosofia', icon: 'psychology' },
-  { label: 'Teologia', icon: 'church' },
-  { label: 'Cultura', icon: 'theater_comedy' },
+  { label: 'Evidências', icon: 'history_edu' },
+  { label: 'Vida e Dilemas', icon: 'psychology' },
+  { label: 'Identidade', icon: 'fingerprint' },
+  { label: 'Cultura e Fé', icon: 'theater_comedy' }
 ];
 
 const calculateLValue = (text: string): number => {
   if (!text) return 0;
   const urls: string[] = text.match(/https?:\/\/[^\s]+/g) || [];
   const bibleRefRegex = /(?:[123]\s)?(?:Gên|Êxo|Lev|Nâm|Deu|Jos|Juí|Rut|1Sm|2Sm|1Rs|2Rs|1Cr|2Cr|Esd|Nee|Est|Jó|Sal|Pro|Ecl|Can|Isa|Jer|Lam|Eze|Dan|Ose|Joe|Amó|Oba|Jon|Miq|Naú|Hab|Sof|Age|Zac|Mal|Mat|Mar|Luc|João|Atos|Rom|1Co|2Co|Gál|Efe|Fil|Col|1Te|2Te|1Ti|2Ti|Tit|Flm|Heb|Tia|1Pe|2Pe|1Jo|2Jo|3Jo|Jud|Apo)\.?\s\d+/gi;
-  const hasBibleRef = bibleRefRegex.test(text);
-
-  if (urls.length === 0 && !hasBibleRef) return 0;
-  if (hasBibleRef) return 3;
-
-  let maxL = 1;
-  urls.forEach(url => {
-    const u = url.toLowerCase();
-    if (u.includes('.edu') || u.includes('.org') || u.includes('journal') || u.includes('museum')) maxL = 3;
-    else if (u.includes('news') || u.includes('somosum') || u.includes('portal')) maxL = Math.max(maxL, 2);
-    else if (u.includes('instagram.com') || u.includes('tiktok.com')) maxL = Math.max(maxL, 0);
-  });
-  return maxL;
+  if (bibleRefRegex.test(text)) return 3;
+  return urls.length > 0 ? 1 : 0;
 };
 
 const getCategoryColor = (category: string) => {
   const cat = category?.toUpperCase() || '';
-  if (cat.includes('CIÊNCIA') || cat.includes('RAZÃO')) return 'bg-blue-600';
+  if (cat.includes('CIÊNCIA')) return 'bg-blue-600';
   if (cat.includes('EVIDÊNCIAS')) return 'bg-amber-700';
-  if (cat.includes('VIDA') || cat.includes('DILEMAS')) return 'bg-rose-600';
+  if (cat.includes('VIDA')) return 'bg-rose-600';
   if (cat.includes('IDENTIDADE')) return 'bg-indigo-600';
-  if (cat.includes('CULTURA') || cat.includes('FÉ')) return 'bg-purple-600';
-  return 'bg-slate-600';
+  return 'bg-purple-600';
 };
 
 const DetailedArticleCard: React.FC<{ 
@@ -73,7 +62,7 @@ const DetailedArticleCard: React.FC<{
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-8 z-10 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex items-center gap-3 mb-3">
           <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
             {item.categoryFull || item.category}
@@ -82,7 +71,7 @@ const DetailedArticleCard: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h2 className="text-[24px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter line-clamp-2 block overflow-hidden">
+        <h2 className="text-[22px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter line-clamp-2 block overflow-hidden min-h-[1.1em]">
           {item.title}
         </h2>
         {item.subtitle && (
@@ -95,8 +84,7 @@ const DetailedArticleCard: React.FC<{
   );
 };
 
-const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; content: any }> = ({ userPosts, readPostIds, content }) => {
-  // Added useNavigate hook to fix the 'navigate' undefined error
+const Aprofundar: React.FC<{ readPostIds: string[]; content: any }> = ({ readPostIds, content }) => {
   const navigate = useNavigate();
   const [allComments, setAllComments] = useState<any[]>([]);
   const [showAllRecent, setShowAllRecent] = useState(false);
@@ -108,21 +96,19 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
   }, []);
 
   const { trending, recent } = useMemo(() => {
+    // FILTRAGEM ABSOLUTA: APENAS O QUE VEM DA PLANILHA COMO APROFUNDAR
     const studies = (content.sheetPosts || []).filter((p: any) => p.categoryType === 'APROFUNDAR');
+    
     if (studies.length === 0) return { trending: [], recent: [] };
 
     const now = Date.now();
-    
     const scored = studies.map(item => {
       const postComments = allComments.filter(c => c.postId === item.id);
       const C = postComments.length;
       const L = calculateLValue(item.content);
       const postTimestamp = item.timestamp || (now - 86400000);
-
       const T_hours = Math.max(1, (now - postTimestamp) / 3600000);
-      const rawScore = ((C * 5) + (L * 5)) / Math.pow(T_hours, 1.3);
-      const score = (isNaN(rawScore) || !isFinite(rawScore)) ? 0 : rawScore;
-
+      const score = ((C * 5) + (L * 5)) / Math.pow(T_hours, 1.3) || 0;
       return { ...item, score };
     });
 
@@ -179,36 +165,30 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
               </div>
             </section>
 
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
-                  <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
-                </div>
-                {content.sheetPosts?.filter((p: any) => p.categoryType === 'APROFUNDAR').length > 4 && (
-                  <button 
-                    onClick={() => setShowAllRecent(!showAllRecent)}
-                    className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
-                  >
-                    {showAllRecent ? 'Ver Menos' : 'Ver Mais'}
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {recent.map(item => (
-                  <div key={item.id} onClick={() => navigate(`/aprofundar/${item.id}`)} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-800`}>
-                    <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" alt={item.title} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                      <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
-                        {item.category}
-                      </span>
-                      <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2 block overflow-hidden">{item.title}</h4>
-                    </div>
+            {recent.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-500 text-[20px]">schedule</span>
+                    <h3 className="text-xs font-bold uppercase tracking-[1.5px] text-[#1E293B] dark:text-blue-400">Novas Colheitas</h3>
                   </div>
-                ))}
-              </div>
-            </section>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {recent.map(item => (
+                    <div key={item.id} onClick={() => navigate(`/aprofundar/${item.id}`)} className={`rounded-[32px] overflow-hidden aspect-[4/5.5] relative group border-2 cursor-pointer ${isDark ? 'border-slate-800' : 'border-white'} bg-slate-900`}>
+                      <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" alt={item.title} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-t from-black/80 to-transparent">
+                        <span className={`text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 block`}>
+                          {item.category}
+                        </span>
+                        <h4 className="text-[13px] font-[900] font-display text-white leading-tight line-clamp-2 block overflow-hidden min-h-[1.2em]">{item.title}</h4>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
       </main>
