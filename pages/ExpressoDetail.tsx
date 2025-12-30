@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
+import { getCategoryColor } from '../App';
 
 marked.setOptions({
   breaks: true,
@@ -226,6 +226,8 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
     </div>
   );
 
+  const categoryColor = getCategoryColor(item.categoryFull || item.category);
+
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-[#F1F5F9]'}`}>
       
@@ -255,7 +257,7 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
 
       <main className={`relative z-20 -mt-20 px-6 pt-12 pb-16 rounded-t-[48px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
         <div className="text-center mb-10 animate-in slide-in-from-bottom-6 duration-700">
-          <span className="text-[12px] font-bold text-[#3B82F6] uppercase tracking-[1.2px] mb-4 block">
+          <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg mb-4 inline-block`}>
             {item.categoryFull || item.category}
           </span>
           <h1 className="text-[32px] font-bold leading-tight tracking-tighter mb-4 text-[#1E293B] dark:text-white">
@@ -268,20 +270,6 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           )}
         </div>
 
-        {item.analogy && item.analogy.text && (
-          <div className={`mb-10 p-8 rounded-[32px] border transition-all animate-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-blue-600/5 border-blue-500/20' : 'bg-slate-50 border-slate-100'}`}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="size-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
-                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>{item.analogy.icon || 'bolt'}</span>
-              </div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">{item.analogy.title || 'A Analogia'}</h4>
-            </div>
-            <p className={`text-[15px] leading-relaxed font-medium whitespace-pre-wrap ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              {item.analogy.text.replace(/\\n/g, '\n')}
-            </p>
-          </div>
-        )}
-
         <div 
           className={`prose prose-slate max-w-none mb-10 animate-in fade-in duration-1000 
             ${isDark ? 'prose-invert prose-p:text-slate-400 prose-headings:text-white' : 'prose-p:text-[#334155] prose-headings:text-slate-900'}
@@ -290,6 +278,20 @@ const ExpressoDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, onTo
           `}
           dangerouslySetInnerHTML={{ __html: processedContent }}
         />
+
+        {item.analogy && item.analogy.text && (
+          <div className={`mb-10 p-8 rounded-[32px] border transition-all animate-in slide-in-from-bottom-4 duration-700 ${isDark ? 'bg-blue-600/5 border-blue-500/20 shadow-xl shadow-blue-900/10' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="size-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>{item.analogy.icon || 'bolt'}</span>
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">{item.analogy.title || 'A ANALOGIA'}</h4>
+            </div>
+            <p className={`text-[15px] leading-relaxed font-medium whitespace-pre-wrap ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              {item.analogy.text.replace(/\\n/g, '\n')}
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-4 mb-16">
           <button 

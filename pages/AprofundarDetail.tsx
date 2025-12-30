@@ -1,9 +1,9 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
+import { getCategoryColor } from '../App';
 
 marked.setOptions({
   breaks: true,
@@ -212,6 +212,8 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   if (!displayItem) return <div className="p-10 text-center font-bold">Artigo não encontrado.</div>;
 
+  const categoryColor = getCategoryColor(displayItem.categoryFull || displayItem.category);
+
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-[#F1F5F9]'}`}>
       
@@ -241,7 +243,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
       <main className={`relative z-20 -mt-24 px-8 pt-16 pb-20 rounded-t-[56px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
         <div className="text-center mb-12 animate-in slide-in-from-bottom-8 duration-700">
-           <span className="text-[#3B82F6] font-bold text-[12px] uppercase tracking-[1.2px] mb-5 inline-block">
+           <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg mb-5 inline-block`}>
              {displayItem.categoryFull || displayItem.category}
            </span>
            <h1 className="text-[38px] font-bold leading-[1.05] tracking-tighter mb-6 text-[#1E293B] dark:text-white">
@@ -253,6 +255,15 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
              </p>
            )}
         </div>
+
+        <div 
+          className={`prose prose-lg max-w-none mb-10 animate-in fade-in duration-1000 
+            ${isDark ? 'prose-invert prose-p:text-slate-400 prose-headings:text-white' : 'prose-p:text-[#334155] prose-headings:text-slate-900'}
+            prose-headings:font-black prose-headings:tracking-tighter prose-p:text-[19px] prose-p:leading-[1.8] prose-p:mb-8 
+            prose-h2:text-blue-600 dark:prose-h2:text-blue-400
+          `}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
 
         {displayItem.analogy && displayItem.analogy.text && (
           <div className={`mb-12 p-10 rounded-[40px] border transition-all animate-in slide-in-from-bottom-6 duration-1000 ${isDark ? 'bg-blue-600/5 border-blue-500/20 shadow-2xl shadow-blue-900/10' : 'bg-blue-50/30 border-blue-100 shadow-xl shadow-blue-100/20'}`}>
@@ -267,15 +278,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
             </p>
           </div>
         )}
-
-        <div 
-          className={`prose prose-lg max-w-none mb-10 animate-in fade-in duration-1000 
-            ${isDark ? 'prose-invert prose-p:text-slate-400 prose-headings:text-white' : 'prose-p:text-[#334155] prose-headings:text-slate-900'}
-            prose-headings:font-black prose-headings:tracking-tighter prose-p:text-[19px] prose-p:leading-[1.8] prose-p:mb-8 
-            prose-h2:text-blue-600 dark:prose-h2:text-blue-400
-          `}
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
 
         <div className="flex gap-4 mb-16">
           <button 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
@@ -13,14 +14,23 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-// Mudamos a versão v7 para v8 para forçar o navegador a ignorar tudo o que ele guardou antes
-const CACHE_KEY = 'somosum_v8_final'; 
-const CACHE_EXPIRATION = 30 * 1000; // 30 segundos de cache apenas durante a transição
+const CACHE_KEY = 'somosum_v9_final'; 
+const CACHE_EXPIRATION = 60 * 1000; 
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
   '#6366F1', '#06B6D4', '#F97316', '#14B8A6', '#D946EF', '#475569'
 ];
+
+export const getCategoryColor = (category: string) => {
+  const cat = category?.toUpperCase() || '';
+  if (cat.includes('CIÊNCIA') || cat.includes('RAZÃO')) return 'bg-blue-600';
+  if (cat.includes('EVIDÊNCIAS')) return 'bg-amber-700';
+  if (cat.includes('VIDA') || cat.includes('DILEMAS')) return 'bg-rose-600';
+  if (cat.includes('IDENTIDADE')) return 'bg-indigo-600';
+  if (cat.includes('CULTURA') || cat.includes('FÉ')) return 'bg-purple-600';
+  return 'bg-slate-600';
+};
 
 const getRandomColor = () => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
@@ -106,6 +116,11 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
+            // Analogias: Coluna J (9) e Coluna K (10)
+            const analogyTitleFromSheet = parts[9];
+            const analogyTextFromSheet = parts[10];
+            const hasAnalogy = analogyTextFromSheet && analogyTextFromSheet.length > 3;
+
             allPosts.push({
               id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
               title: parts[0],
@@ -118,7 +133,12 @@ const AppContentComponent: React.FC = () => {
               bibleReference: parts[6] || "",
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
-              status: 'published'
+              status: 'published',
+              analogy: hasAnalogy ? {
+                icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
+                title: analogyTitleFromSheet || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE'),
+                text: analogyTextFromSheet
+              } : undefined
             });
           }
         });
@@ -143,9 +163,22 @@ const AppContentComponent: React.FC = () => {
     const initializeApp = async () => {
       const savedProfile = localStorage.getItem('user_profile');
       if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        setUserProfile(profile);
-        if (location.pathname === '/') navigate('/home', { replace: true });
+        try {
+          const profile = JSON.parse(savedProfile);
+          // Incremento real do contador de acessos a cada vez que o componente App monta
+          const updatedProfile = { 
+            ...profile, 
+            loginCount: (profile.loginCount || 0) + 1,
+            readPostIds: Array.isArray(profile.readPostIds) ? profile.readPostIds : []
+          };
+          setUserProfile(updatedProfile);
+          localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+          if (updatedProfile.isProfileComplete) userService.saveProfile(updatedProfile.id, updatedProfile).catch(console.error);
+          
+          if (location.pathname === '/') navigate('/home', { replace: true });
+        } catch (e) {
+          console.error("Erro ao processar perfil salvo", e);
+        }
       }
 
       const cached = localStorage.getItem(CACHE_KEY);
