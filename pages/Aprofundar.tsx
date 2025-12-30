@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Expresso } from '../types';
@@ -114,7 +115,8 @@ const Aprofundar: React.FC<{ userPosts: Expresso[]; readPostIds: string[]; conte
       const C = postComments.length;
       const L = calculateLValue(item.content);
       const V = 0;
-      const T = Math.max(1, (now - (item.hora || now - 86400000)) / 3600000);
+      // Fix: Use item.timestamp instead of item.hora, as Expresso objects use timestamp for creation time
+      const T = Math.max(1, (now - (item.timestamp || now - 86400000)) / 3600000);
       const score = ((C * 5) + (L * 5) + (V * 1)) / Math.pow(T, 1.3);
       return { ...item, score };
     });

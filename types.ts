@@ -54,6 +54,8 @@ export interface Expresso {
   tags: string[];
   isClassic?: boolean;
   status?: 'draft' | 'pending' | 'published';
+  // Adicionado timestamp para suportar ranking e ordenação cronológica
+  timestamp?: number;
 }
 
 export interface UserProfile {

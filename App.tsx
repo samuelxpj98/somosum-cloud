@@ -116,8 +116,8 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
-            // Analogias: Coluna J (9) e Coluna K (10)
-            const analogyTitleFromSheet = parts[9];
+            // Coluna J (9) - Título | Coluna K (10) - Texto
+            const analogyTitleFromSheet = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
             const analogyTextFromSheet = parts[10];
             const hasAnalogy = analogyTextFromSheet && analogyTextFromSheet.length > 3;
 
@@ -134,9 +134,10 @@ const AppContentComponent: React.FC = () => {
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
+              timestamp: Date.now() - (index * 3600000), // Simula ordem cronológica para o ranking
               analogy: hasAnalogy ? {
                 icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
-                title: analogyTitleFromSheet || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE'),
+                title: analogyTitleFromSheet,
                 text: analogyTextFromSheet
               } : undefined
             });
@@ -165,7 +166,6 @@ const AppContentComponent: React.FC = () => {
       if (savedProfile) {
         try {
           const profile = JSON.parse(savedProfile);
-          // Incremento real do contador de acessos a cada vez que o componente App monta
           const updatedProfile = { 
             ...profile, 
             loginCount: (profile.loginCount || 0) + 1,
