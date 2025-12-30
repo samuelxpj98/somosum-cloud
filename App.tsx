@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
@@ -13,9 +14,10 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-const CACHE_KEY = 'somosum_v14_final_strict'; 
-const APP_VERSION = '14.0';
-const CACHE_EXPIRATION = 20 * 1000; 
+// VERSÃO 15: Força o iPhone a recarregar as colunas corrigidas da planilha
+const CACHE_KEY = 'somosum_v15_fixed_columns'; 
+const APP_VERSION = '15.0';
+const CACHE_EXPIRATION = 10 * 1000; // 10 segundos para atualização quase em tempo real durante testes
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
@@ -96,20 +98,16 @@ const AppContentComponent: React.FC = () => {
         if (!res.ok) return;
         
         const tsvText = await res.text();
-        const cleanTsv = tsvText
-          .replace(/^\uFEFF/, '') 
-          .split('\r\n').join('\n') 
-          .split('\r').join('\n'); 
+        const cleanTsv = tsvText.replace(/^\uFEFF/, '').split(/\r?\n/);
 
-        const lines = cleanTsv.split('\n').filter(line => line.trim() !== "");
-        const rows = lines.slice(1);
-        
+        const rows = cleanTsv.slice(1);
         const gid = url.split('gid=')[1].split('&')[0];
         const isAprofundarTab = gid === '922094770';
 
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
           const postTitle = (parts[0] || "").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+          
           if (!postTitle || postTitle.length < 2 || postTitle.toLowerCase() === 'título') return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
@@ -120,9 +118,10 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
-            const analogyTitleFromSheet = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
-            const analogyTextFromSheet = parts[10];
-            const hasAnalogy = analogyTextFromSheet && analogyTextFromSheet.length > 2;
+            // CORREÇÃO DE MAPEAMENTO DE COLUNAS
+            const analogyTitle = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
+            const analogyText = parts[10]; 
+            const hasAnalogy = analogyText && analogyText.length > 2;
 
             allPosts.push({
               id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
@@ -131,22 +130,24 @@ const AppContentComponent: React.FC = () => {
               imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
               category: parts[3] || "GERAL",
               categoryFull: parts[3] || "GERAL",
-              subtitle: parts[4] || "",
+              subtitle: parts[4] || "", // Coluna 4: Subtítulo
               readingTime: parts[5] || (tipo === "APROFUNDAR" ? "8 MIN" : "2 MIN"),
-              bibleReference: parts[6] || "",
+              bibleReference: parts[6] || "", // Coluna 6: Referência Bíblica
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
-              timestamp: Date.now() - (index * 10000), 
+              timestamp: Date.now() - (index * 1000), 
               analogy: hasAnalogy ? {
                 icon: tipo === "EXPRESSO" ? 'bolt' : 'menu_book',
-                title: analogyTitleFromSheet,
-                text: analogyTextFromSheet
+                title: analogyTitle,
+                text: analogyText.replace(/\\n/g, '\n')
               } : undefined
             });
           }
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error("Erro fetch planilha", e);
+      }
     }));
 
     setSheetPosts(allPosts);
@@ -162,7 +163,7 @@ const AppContentComponent: React.FC = () => {
   useEffect(() => {
     const lastVer = localStorage.getItem('app_version_somosum');
     if (lastVer !== APP_VERSION) {
-      localStorage.removeItem(CACHE_KEY);
+      localStorage.clear(); // Limpeza total para v15
       localStorage.setItem('app_version_somosum', APP_VERSION);
     }
 
@@ -247,7 +248,7 @@ const AppContentComponent: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Planilha...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Banco de Dados...</p>
       </div>
     </div>
   );

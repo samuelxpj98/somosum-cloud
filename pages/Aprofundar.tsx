@@ -5,14 +5,14 @@ import { Expresso } from '../types';
 import Header from '../components/Header';
 import { commentsService } from '../lib/firebase';
 
-// Fix: Exporting FIXED_CATEGORIES as expected by EditorAprofundamento.tsx
+// DEFINIÇÃO DAS CATEGORIAS FIXAS PARA O FILTRO E EDITOR
 export const FIXED_CATEGORIES = [
   { label: 'Todos', icon: 'apps' },
   { label: 'Fé e Ciência', icon: 'science' },
   { label: 'Evidências', icon: 'history_edu' },
-  { label: 'Vida e Dilemas', icon: 'favorite' },
   { label: 'Identidade', icon: 'fingerprint' },
-  { label: 'Cultura e Fé', icon: 'theater_comedy' }
+  { label: 'Fé e Cultura', icon: 'theater_comedy' },
+  { label: 'Vida e Dilemas', icon: 'psychology' }
 ];
 
 const getCategoryColor = (category: string) => {
@@ -91,6 +91,7 @@ const Aprofundar: React.FC<{ readPostIds: string[]; content: any }> = ({ readPos
     return (content.sheetPosts || []).filter((p: any) => {
       if (p.categoryType !== 'APROFUNDAR') return false;
       const title = p.title.toLowerCase();
+      // "O Código de Emaús" ou "O Ajuste Fino"
       return title.includes('código de emaús') || title.includes('ajuste fino');
     });
   }, [content.sheetPosts]);
@@ -113,7 +114,7 @@ const Aprofundar: React.FC<{ readPostIds: string[]; content: any }> = ({ readPos
         {studies.length === 0 ? (
           <section className="py-20 text-center opacity-40">
             <span className="material-symbols-outlined text-6xl">menu_book</span>
-            <p className="text-xs font-black uppercase mt-4">Nenhum estudo encontrado na planilha.</p>
+            <p className="text-xs font-black uppercase mt-4">Sincronizando artigos...</p>
           </section>
         ) : (
           <section>
