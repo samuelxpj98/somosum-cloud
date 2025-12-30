@@ -5,21 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>SomosUm Goiás</title>
     
-    <!-- Conexão com o Manifesto para transformar em App -->
     <link rel="manifest" href="metadata.json">
 
-    <!-- Meta tags para comportamento de Aplicativo Nativo (iOS) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SomosUm">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1E293B">
 
-    <!-- Ícones de alta fidelidade para Tela de Início -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/180/bible.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/fluency/152/bible.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/bible.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/fluency/167/bible.png">
 
     <script src="https://cdn.tailwindcss.com?plugins=typography,line-clamp"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,51 +50,19 @@
         background-color: var(--bg-app);
         color: var(--text-body);
         overflow-x: hidden;
-        line-height: 1.6;
-        touch-action: manipulation;
         -webkit-text-size-adjust: 100%;
         -webkit-tap-highlight-color: transparent;
       }
 
-      @supports (padding: env(safe-area-inset-top)) {
-        header {
-          padding-top: calc(1.25rem + env(safe-area-inset-top)) !important;
-        }
-        nav {
-          padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)) !important;
-          height: auto !important;
-          min-height: 5rem;
-        }
-      }
-
-      .font-display { font-family: 'Inter', sans-serif; font-weight: 700; }
-      .font-serif { font-family: 'Lora', serif; font-style: italic; }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      .soft-shadow { box-shadow: 0 4px 20px -2px rgba(30, 41, 59, 0.05); }
-
-      /* Fix CRÍTICO para Safari iOS: garante que títulos line-clamp apareçam */
+      /* Fix de visibilidade para Safari Mobile */
       .line-clamp-2 {
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
-        white-space: normal !important;
-      }
-      
-      .line-clamp-1 {
-        display: -webkit-box !important;
-        -webkit-line-clamp: 1 !important;
-        -webkit-box-orient: vertical !important;
-        overflow: hidden !important;
-        white-space: normal !important;
       }
 
-      .prose h1, .prose h2, .prose h3, .prose h4, .prose strong {
-        color: inherit;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-      }
+      .font-display { font-family: 'Inter', sans-serif; font-weight: 700; }
     </style>
     <script type="importmap">
     {
@@ -116,11 +78,6 @@
         "firebase/": "https://esm.sh/firebase@^12.7.0/"
       }
     }
-    </script>
-    <script>
-      document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-      });
     </script>
   </head>
   <body>

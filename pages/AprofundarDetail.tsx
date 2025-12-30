@@ -193,14 +193,14 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   const handleSendComment = async () => {
     if (!commentText.trim() || !id || !displayItem) return;
-    // Fix: Added userId to comment to enable notifications
+    // Fix: Using content.profile instead of undefined profile variable
     await commentsService.addComment(id, {
       userId: content.profile.id,
       usuario: content.profile.name || "Explorador",
       texto: commentText,
       userAvatar: content.profile.avatarUrl,
       userColor: content.profile.avatarColor || "#3B82F6",
-      church: profile.church,
+      church: content.profile.church,
       postTitle: displayItem.title
     });
     setCommentText('');

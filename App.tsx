@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppContent, Expresso, UserProfile } from './types';
@@ -14,10 +13,9 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-// CHAVE DE CACHE ATUALIZADA - Força a limpeza de qualquer dado antigo (fakes)
-const CACHE_KEY = 'somosum_v13_absolute_clean'; 
-const APP_VERSION = '13.0';
-const CACHE_EXPIRATION = 30 * 1000; // 30 segundos para ser bem agressivo na atualização
+const CACHE_KEY = 'somosum_v14_final_strict'; 
+const APP_VERSION = '14.0';
+const CACHE_EXPIRATION = 20 * 1000; 
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
@@ -95,7 +93,7 @@ const AppContentComponent: React.FC = () => {
     await Promise.all(SHEET_URLS.map(async (url) => {
       try {
         const res = await fetch(`${url}&t=${Date.now()}`);
-        if (!res.ok) throw new Error("Falha na rede");
+        if (!res.ok) return;
         
         const tsvText = await res.text();
         const cleanTsv = tsvText
@@ -112,15 +110,12 @@ const AppContentComponent: React.FC = () => {
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
           const postTitle = (parts[0] || "").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-          
-          // Pular linhas vazias ou headers fantasmas
           if (!postTitle || postTitle.length < 2 || postTitle.toLowerCase() === 'título') return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
-          let tipo = "EXPRESSO";
+          let tipo = isAprofundarTab ? "APROFUNDAR" : "EXPRESSO";
           if (tipoRaw.includes("APROFUNDAR")) tipo = "APROFUNDAR";
           else if (tipoRaw.includes("MISSAO") || tipoRaw.includes("MISSÃO")) tipo = "MISSAO";
-          else if (isAprofundarTab) tipo = "APROFUNDAR";
 
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
@@ -151,12 +146,9 @@ const AppContentComponent: React.FC = () => {
             });
           }
         });
-      } catch (e) {
-        console.error("Erro na carga da planilha:", e);
-      }
+      } catch (e) {}
     }));
 
-    // SÓ ATUALIZA SE HOUVER DADOS REAIS
     setSheetPosts(allPosts);
     setDynamicMissions(allMissions);
     localStorage.setItem(CACHE_KEY, JSON.stringify({ 
@@ -168,13 +160,10 @@ const AppContentComponent: React.FC = () => {
   };
 
   useEffect(() => {
-    // RESET TOTAL DE CACHE PARA GARANTIR QUE OS FAKES SUMAM
     const lastVer = localStorage.getItem('app_version_somosum');
     if (lastVer !== APP_VERSION) {
-      localStorage.clear();
+      localStorage.removeItem(CACHE_KEY);
       localStorage.setItem('app_version_somosum', APP_VERSION);
-      window.location.reload();
-      return;
     }
 
     const initializeApp = async () => {
@@ -182,15 +171,12 @@ const AppContentComponent: React.FC = () => {
       if (savedProfile) {
         try {
           const profile = JSON.parse(savedProfile);
-          const updatedProfile = { 
-            ...profile, 
+          setUserProfile({
+            ...profile,
             readPostIds: Array.isArray(profile.readPostIds) ? profile.readPostIds : []
-          };
-          setUserProfile(updatedProfile);
+          });
           if (location.pathname === '/') navigate('/home', { replace: true });
-        } catch (e) {
-          console.error("Erro perfil", e);
-        }
+        } catch (e) {}
       }
 
       const cached = localStorage.getItem(CACHE_KEY);
@@ -204,9 +190,7 @@ const AppContentComponent: React.FC = () => {
             fetchSheetData(); 
             return;
           }
-        } catch (e) {
-          localStorage.removeItem(CACHE_KEY);
-        }
+        } catch (e) {}
       }
       await fetchSheetData();
     };
@@ -236,22 +220,18 @@ const AppContentComponent: React.FC = () => {
 
   const toggleSavePost = (id: string) => {
     const currentSaved = userProfile.savedPostIds || [];
-    const isSaved = currentSaved.includes(id);
-    const newSavedIds = isSaved ? currentSaved.filter(pid => pid !== id) : [...currentSaved, id];
+    const newSavedIds = currentSaved.includes(id) ? currentSaved.filter(pid => pid !== id) : [...currentSaved, id];
     updateProfile({ savedPostIds: newSavedIds });
   };
 
   const markAsRead = (id: string) => {
     const currentRead = userProfile.readPostIds || [];
-    if (!currentRead.includes(id)) {
-      updateProfile({ readPostIds: [...currentRead, id] });
-    }
+    if (!currentRead.includes(id)) updateProfile({ readPostIds: [...currentRead, id] });
   };
 
   const toggleLikePost = (id: string) => {
     const currentLiked = userProfile.likedPostIds || [];
-    const isLiked = currentLiked.includes(id);
-    const newLikedIds = isLiked ? currentLiked.filter(pid => pid !== id) : [...currentLiked, id];
+    const newLikedIds = currentLiked.includes(id) ? currentLiked.filter(pid => pid !== id) : [...currentLiked, id];
     updateProfile({ likedPostIds: newLikedIds });
   };
 
@@ -267,13 +247,13 @@ const AppContentComponent: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Limpando e Sincronizando...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Planilha...</p>
       </div>
     </div>
   );
 
   return (
-    <div className={`mx-auto max-w-md min-h-screen shadow-xl relative overflow-x-hidden ${userProfile.isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+    <div className={`mx-auto max-w-md min-h-screen relative overflow-x-hidden ${userProfile.isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
       <Routes>
         <Route path="/" element={<Landing content={mergedContent} onLogin={handleLogin} />} />
         <Route path="/onboarding" element={<Onboarding profile={userProfile} onUpdate={updateProfile} />} />
