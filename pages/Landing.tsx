@@ -48,13 +48,18 @@ const Landing: React.FC<LandingProps> = ({ content, onLogin }) => {
 
   const startNewJourney = () => {
     localStorage.removeItem('user_profile');
-    navigate('/onboarding'); // Agora vai direto para o cadastro se der erro
+    navigate('/onboarding');
+  };
+
+  const appendGmail = () => {
+    if (!email.includes('@')) {
+      setEmail(prev => prev + '@gmail.com');
+    }
   };
 
   return (
     <div className={`relative min-h-screen flex flex-col p-6 items-center overflow-x-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-[#f8fafc] text-slate-900'}`}>
       
-      {/* Login Modal */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => !loading && setShowLoginModal(false)}></div>
@@ -64,7 +69,18 @@ const Landing: React.FC<LandingProps> = ({ content, onLogin }) => {
             
             <form onSubmit={handleSyncAccount} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-blue-600 ml-4">E-mail cadastrado</label>
+                <div className="flex justify-between items-center px-4">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-blue-600">E-mail cadastrado</label>
+                  {!email.includes('@') && email.length > 2 && (
+                    <button 
+                      type="button"
+                      onClick={appendGmail}
+                      className="text-[9px] font-black text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md active:scale-95 transition-all"
+                    >
+                      + @gmail.com
+                    </button>
+                  )}
+                </div>
                 <input 
                   autoFocus
                   required
@@ -154,7 +170,6 @@ const Landing: React.FC<LandingProps> = ({ content, onLogin }) => {
         </div>
       </div>
 
-      {/* Hero Image */}
       <div className="relative z-10 w-full mb-10">
         <div className={`w-full aspect-[1.3/1] rounded-[32px] overflow-hidden shadow-2xl relative border-4 transition-colors ${isDark ? 'border-slate-800' : 'border-white'}`}>
           <img 
@@ -172,7 +187,6 @@ const Landing: React.FC<LandingProps> = ({ content, onLogin }) => {
         </div>
       </div>
 
-      {/* Description */}
       <div className="relative z-10 w-full text-center mb-10 px-4">
         <h3 className={`text-[26px] font-[800] mb-3 tracking-tight font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>
           {landing.title}
@@ -182,7 +196,6 @@ const Landing: React.FC<LandingProps> = ({ content, onLogin }) => {
         </p>
       </div>
 
-      {/* Action Buttons */}
       <div className="relative z-10 w-full space-y-4 mb-12 px-2">
         <button 
           onClick={() => navigate('/onboarding')}

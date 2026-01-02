@@ -5,6 +5,7 @@ import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
 import { getCategoryColor } from '../App';
+import AIApologist from '../components/AIApologist';
 
 marked.setOptions({
   breaks: true,
@@ -30,7 +31,6 @@ const CommentItem: React.FC<{
 
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
-    // Fix: Added userId to reply to enable notifications
     await commentsService.addComment(postId, {
       userId: profile.id,
       usuario: profile.name || "Explorador",
@@ -152,6 +152,7 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
   const [commentText, setCommentText] = useState('');
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showMentor, setShowMentor] = useState(false);
 
   const displayItem = useMemo(() => {
     return content.expressos.find((e: any) => e.id === id) || (content as any).sheetPosts?.find((e: any) => e.id === id);
@@ -193,7 +194,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
 
   const handleSendComment = async () => {
     if (!commentText.trim() || !id || !displayItem) return;
-    // Fix: Using content.profile instead of undefined profile variable
     await commentsService.addComment(id, {
       userId: content.profile.id,
       usuario: content.profile.name || "Explorador",
@@ -228,6 +228,15 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
         </div>
       )}
 
+      {showMentor && (
+        <AIApologist 
+          articleTitle={displayItem.title} 
+          articleContent={displayItem.content} 
+          isDarkMode={isDark} 
+          onClose={() => setShowMentor(false)} 
+        />
+      )}
+
       <section className="relative w-full h-[60vh] overflow-hidden">
         <img src={displayItem.imageUrl} className="absolute inset-0 w-full h-full object-cover animate-in fade-in zoom-in-110 duration-1000" alt={displayItem.title} />
         <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-10">
@@ -244,6 +253,13 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
             <span className="material-symbols-outlined text-[24px]">share</span>
           </button>
         </header>
+
+        <button 
+          onClick={() => setShowMentor(true)}
+          className="absolute bottom-32 right-6 z-40 size-16 bg-blue-600 text-white rounded-3xl shadow-2xl flex items-center justify-center animate-bounce border-2 border-white/20"
+        >
+          <span className="material-symbols-outlined text-[32px]">smart_toy</span>
+        </button>
       </section>
 
       <main className={`relative z-20 -mt-24 px-8 pt-16 pb-20 rounded-t-[56px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>
@@ -251,13 +267,22 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
            <span className={`${categoryColor} text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg mb-5 inline-block`}>
              {displayItem.categoryFull || displayItem.category}
            </span>
-           <h1 className="text-[38px] font-bold leading-[1.05] tracking-tighter mb-6 text-[#1E293B] dark:text-white">
+           <h1 className="text-[38px] font-bold leading-[1.05] tracking-tighter mb-4 text-[#1E293B] dark:text-white">
              {displayItem.title}
            </h1>
            {displayItem.subtitle && (
-             <p className="text-[18px] font-bold leading-relaxed text-[#3B82F6] max-w-[340px] mx-auto italic opacity-80">
-               "{displayItem.subtitle}"
-             </p>
+             <div className="flex flex-col items-center gap-2 mb-8">
+                <span className="h-[2px] w-12 bg-blue-500 rounded-full"></span>
+                <p className="text-[18px] font-bold leading-relaxed text-[#3B82F6] max-w-[340px] italic opacity-80">
+                  {displayItem.subtitle}
+                </p>
+             </div>
+           )}
+           {displayItem.bibleReference && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-8">
+                <span className="material-symbols-outlined text-blue-500 text-[18px]">auto_stories</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">{displayItem.bibleReference}</span>
+              </div>
            )}
         </div>
 

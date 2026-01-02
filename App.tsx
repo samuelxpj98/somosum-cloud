@@ -14,10 +14,10 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-// VERSÃO 15: Força o iPhone a recarregar as colunas corrigidas da planilha
-const CACHE_KEY = 'somosum_v15_fixed_columns'; 
-const APP_VERSION = '15.0';
-const CACHE_EXPIRATION = 10 * 1000; // 10 segundos para atualização quase em tempo real durante testes
+// VERSÃO 16: Força o carregamento dos novos mapeamentos de colunas e recursos de UI
+const CACHE_KEY = 'somosum_v16_final_mapping'; 
+const APP_VERSION = '16.0';
+const CACHE_EXPIRATION = 5 * 1000; 
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
@@ -118,7 +118,7 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
-            // CORREÇÃO DE MAPEAMENTO DE COLUNAS
+            // MAPEAMENTO DE COLUNAS RIGOROSO
             const analogyTitle = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
             const analogyText = parts[10]; 
             const hasAnalogy = analogyText && analogyText.length > 2;
@@ -130,9 +130,9 @@ const AppContentComponent: React.FC = () => {
               imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
               category: parts[3] || "GERAL",
               categoryFull: parts[3] || "GERAL",
-              subtitle: parts[4] || "", // Coluna 4: Subtítulo
+              subtitle: parts[4] || "", // Coluna 4: Subtítulo (Ex: 'Lucas 24:13-35')
               readingTime: parts[5] || (tipo === "APROFUNDAR" ? "8 MIN" : "2 MIN"),
-              bibleReference: parts[6] || "", // Coluna 6: Referência Bíblica
+              bibleReference: parts[6] || "", // Coluna 6: Referência adicional
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
@@ -163,7 +163,7 @@ const AppContentComponent: React.FC = () => {
   useEffect(() => {
     const lastVer = localStorage.getItem('app_version_somosum');
     if (lastVer !== APP_VERSION) {
-      localStorage.clear(); // Limpeza total para v15
+      localStorage.clear(); 
       localStorage.setItem('app_version_somosum', APP_VERSION);
     }
 
@@ -248,7 +248,7 @@ const AppContentComponent: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando Banco de Dados...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atualizando Colunas...</p>
       </div>
     </div>
   );
