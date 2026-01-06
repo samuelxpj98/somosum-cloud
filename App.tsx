@@ -14,9 +14,9 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-// VERSÃO 17: Suporte para Imagens Diretas do Google Drive via Planilha
+// VERSÃO 17.1: Correção do contador de acessos
 const CACHE_KEY = 'somosum_v17_drive_images'; 
-const APP_VERSION = '17.0';
+const APP_VERSION = '17.1';
 const CACHE_EXPIRATION = 5 * 1000; 
 
 export const AVATAR_COLORS = [
@@ -24,30 +24,17 @@ export const AVATAR_COLORS = [
   '#6366F1', '#06B6D4', '#F97316', '#14B8A6', '#D946EF', '#475569'
 ];
 
-/**
- * Utilitário Sênior: Converte links de compartilhamento do Google Drive 
- * em URLs de imagem direta que podem ser usadas em tags <img>.
- */
 export const formatImageUrl = (url: string): string => {
   if (!url) return "https://images.unsplash.com/photo-1504052434569-70ad5836ab65";
-  
-  // Se for um link do Google Drive
   if (url.includes('drive.google.com')) {
     let fileId = "";
-    // Padrão 1: /file/d/FILE_ID/view
     if (url.includes('/file/d/')) {
       fileId = url.split('/file/d/')[1].split('/')[0];
-    } 
-    // Padrão 2: ?id=FILE_ID
-    else if (url.includes('id=')) {
+    } else if (url.includes('id=')) {
       fileId = url.split('id=')[1].split('&')[0];
     }
-    
-    if (fileId) {
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
-    }
+    if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
   }
-  
   return url;
 };
 
@@ -123,10 +110,8 @@ const AppContentComponent: React.FC = () => {
       try {
         const res = await fetch(`${url}&t=${Date.now()}`);
         if (!res.ok) return;
-        
         const tsvText = await res.text();
         const cleanTsv = tsvText.replace(/^\uFEFF/, '').split(/\r?\n/);
-
         const rows = cleanTsv.slice(1);
         const gid = url.split('gid=')[1].split('&')[0];
         const isAprofundarTab = gid === '922094770';
@@ -134,7 +119,6 @@ const AppContentComponent: React.FC = () => {
         rows.forEach((line, index) => {
           const parts = line.split('\t').map(p => p.trim());
           const postTitle = (parts[0] || "").replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-          
           if (!postTitle || postTitle.length < 2 || postTitle.toLowerCase() === 'título') return; 
 
           let tipoRaw = (parts[7] || "").toUpperCase().trim();
@@ -153,7 +137,7 @@ const AppContentComponent: React.FC = () => {
               id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
               title: postTitle,
               content: (parts[1] || "").replace(/\\n/g, '\n'),
-              imageUrl: formatImageUrl(parts[2]), // FORMATAÇÃO DE DRIVE AUTOMÁTICA
+              imageUrl: formatImageUrl(parts[2]),
               category: parts[3] || "GERAL",
               categoryFull: parts[3] || "GERAL",
               subtitle: parts[4] || "", 
@@ -186,6 +170,15 @@ const AppContentComponent: React.FC = () => {
     setLoading(false);
   };
 
+  const updateProfile = (updated: Partial<UserProfile>) => {
+    const complete = { ...userProfile, ...updated };
+    setUserProfile(complete);
+    localStorage.setItem('user_profile', JSON.stringify(complete));
+    if (complete.isProfileComplete && complete.id) {
+      userService.saveProfile(complete.id, complete).catch(console.error);
+    }
+  };
+
   useEffect(() => {
     const lastVer = localStorage.getItem('app_version_somosum');
     if (lastVer !== APP_VERSION) {
@@ -197,11 +190,23 @@ const AppContentComponent: React.FC = () => {
       const savedProfile = localStorage.getItem('user_profile');
       if (savedProfile) {
         try {
-          const profile = JSON.parse(savedProfile);
-          setUserProfile({
+          const profile: UserProfile = JSON.parse(savedProfile);
+          
+          // Lógica de Incremento de Acesso por Sessão
+          const sessionFlag = sessionStorage.getItem('somosum_session_active');
+          let updatedProfile = {
             ...profile,
             readPostIds: Array.isArray(profile.readPostIds) ? profile.readPostIds : []
-          });
+          };
+
+          if (!sessionFlag) {
+            updatedProfile.loginCount = (updatedProfile.loginCount || 0) + 1;
+            sessionStorage.setItem('somosum_session_active', 'true');
+            localStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+            if (updatedProfile.id) userService.saveProfile(updatedProfile.id, updatedProfile).catch(console.error);
+          }
+
+          setUserProfile(updatedProfile);
           if (location.pathname === '/') navigate('/home', { replace: true });
         } catch (e) {}
       }
@@ -231,17 +236,24 @@ const AppContentComponent: React.FC = () => {
     profile: userProfile
   }), [userProfile, sheetPosts]);
 
-  const updateProfile = (updated: Partial<UserProfile>) => {
-    const complete = { ...userProfile, ...updated };
-    setUserProfile(complete);
-    localStorage.setItem('user_profile', JSON.stringify(complete));
-    if (complete.isProfileComplete) userService.saveProfile(complete.id, complete).catch(console.error);
-  };
-
   const handleLogin = (syncedProfile: UserProfile) => {
-    const baseProfile = { ...FALLBACK_DATA.profile, ...syncedProfile, isProfileComplete: true };
+    // Incrementa o contador ao logar em uma conta existente
+    const currentCount = syncedProfile.loginCount || 0;
+    const baseProfile: UserProfile = { 
+      ...FALLBACK_DATA.profile, 
+      ...syncedProfile, 
+      loginCount: currentCount + 1,
+      isProfileComplete: true 
+    };
+    
     setUserProfile(baseProfile);
     localStorage.setItem('user_profile', JSON.stringify(baseProfile));
+    sessionStorage.setItem('somosum_session_active', 'true');
+    
+    if (baseProfile.id) {
+      userService.saveProfile(baseProfile.id, baseProfile).catch(console.error);
+    }
+    
     navigate('/home');
   };
 
