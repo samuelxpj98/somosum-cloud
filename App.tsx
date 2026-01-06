@@ -14,15 +14,42 @@ import Onboarding from './pages/Onboarding';
 import BottomNav from './components/BottomNav';
 import { userService, commentsService } from './lib/firebase';
 
-// VERSÃO 16: Força o carregamento dos novos mapeamentos de colunas e recursos de UI
-const CACHE_KEY = 'somosum_v16_final_mapping'; 
-const APP_VERSION = '16.0';
+// VERSÃO 17: Suporte para Imagens Diretas do Google Drive via Planilha
+const CACHE_KEY = 'somosum_v17_drive_images'; 
+const APP_VERSION = '17.0';
 const CACHE_EXPIRATION = 5 * 1000; 
 
 export const AVATAR_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E',
   '#6366F1', '#06B6D4', '#F97316', '#14B8A6', '#D946EF', '#475569'
 ];
+
+/**
+ * Utilitário Sênior: Converte links de compartilhamento do Google Drive 
+ * em URLs de imagem direta que podem ser usadas em tags <img>.
+ */
+export const formatImageUrl = (url: string): string => {
+  if (!url) return "https://images.unsplash.com/photo-1504052434569-70ad5836ab65";
+  
+  // Se for um link do Google Drive
+  if (url.includes('drive.google.com')) {
+    let fileId = "";
+    // Padrão 1: /file/d/FILE_ID/view
+    if (url.includes('/file/d/')) {
+      fileId = url.split('/file/d/')[1].split('/')[0];
+    } 
+    // Padrão 2: ?id=FILE_ID
+    else if (url.includes('id=')) {
+      fileId = url.split('id=')[1].split('&')[0];
+    }
+    
+    if (fileId) {
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+  }
+  
+  return url;
+};
 
 export const getCategoryColor = (category: string) => {
   const cat = category?.toUpperCase() || '';
@@ -118,7 +145,6 @@ const AppContentComponent: React.FC = () => {
           if (tipo === "MISSAO") {
             allMissions.push(parts[1] || parts[0]);
           } else {
-            // MAPEAMENTO DE COLUNAS RIGOROSO
             const analogyTitle = parts[9] || (tipo === "EXPRESSO" ? 'A ANALOGIA' : 'VERSÍCULO CHAVE');
             const analogyText = parts[10]; 
             const hasAnalogy = analogyText && analogyText.length > 2;
@@ -127,12 +153,12 @@ const AppContentComponent: React.FC = () => {
               id: `post-${gid}-${index}-${tipo.toLowerCase()}`,
               title: postTitle,
               content: (parts[1] || "").replace(/\\n/g, '\n'),
-              imageUrl: parts[2] || "https://images.unsplash.com/photo-1504052434569-70ad5836ab65",
+              imageUrl: formatImageUrl(parts[2]), // FORMATAÇÃO DE DRIVE AUTOMÁTICA
               category: parts[3] || "GERAL",
               categoryFull: parts[3] || "GERAL",
-              subtitle: parts[4] || "", // Coluna 4: Subtítulo (Ex: 'Lucas 24:13-35')
+              subtitle: parts[4] || "", 
               readingTime: parts[5] || (tipo === "APROFUNDAR" ? "8 MIN" : "2 MIN"),
-              bibleReference: parts[6] || "", // Coluna 6: Referência adicional
+              bibleReference: parts[6] || "", 
               categoryType: tipo,
               tags: [parts[3]?.toLowerCase() || 'geral'],
               status: 'published',
@@ -248,7 +274,7 @@ const AppContentComponent: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atualizando Colunas...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Formatando Imagens do Drive...</p>
       </div>
     </div>
   );

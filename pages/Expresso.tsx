@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContent, Expresso } from '../types';
@@ -34,13 +35,23 @@ const Card: React.FC<{
   rank?: number;
 }> = ({ item, isGrid, isRead, isDark, rank }) => {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
+
+  const imageUrl = imgError 
+    ? "https://images.unsplash.com/photo-1504052434569-70ad5836ab65" 
+    : item.imageUrl;
 
   return (
     <div 
       onClick={() => navigate(`/expresso/${item.id}`)}
       className={`${isGrid ? 'w-full aspect-[4/5.5]' : 'w-full h-56'} relative rounded-[32px] overflow-hidden shadow-lg cursor-pointer group active:scale-[0.97] transition-all duration-500 border border-white/5 bg-slate-900`}
     >
-      <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" />
+      <img 
+        src={imageUrl} 
+        onError={() => setImgError(true)}
+        alt={item.title} 
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" 
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent transition-opacity group-hover:opacity-90"></div>
       
       {rank !== undefined && (
@@ -94,7 +105,6 @@ const ExpressoPage: React.FC<{ content: AppContent; readPostIds: string[] }> = (
       const L = calculateLValue(item.content);
       const postTimestamp = item.timestamp || (now - 86400000);
       
-      // Proteção contra divisão por zero e NaN para Safari
       const T_hours = Math.max(1, (now - postTimestamp) / 3600000); 
       const rawScore = ((C * 4) + (L * 2)) / Math.pow(T_hours, 1.2);
       const score = (isNaN(rawScore) || !isFinite(rawScore)) ? 0 : rawScore;
