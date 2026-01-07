@@ -5,7 +5,6 @@ import { AppContent } from '../types';
 import { commentsService } from '../lib/firebase';
 import { marked } from 'marked';
 import { getCategoryColor } from '../App';
-import AIApologist from '../components/AIApologist';
 
 marked.setOptions({
   breaks: true,
@@ -152,7 +151,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
   const [commentText, setCommentText] = useState('');
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [showMentor, setShowMentor] = useState(false);
 
   const displayItem = useMemo(() => {
     return content.expressos.find((e: any) => e.id === id) || (content as any).sheetPosts?.find((e: any) => e.id === id);
@@ -228,15 +226,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
         </div>
       )}
 
-      {showMentor && (
-        <AIApologist 
-          articleTitle={displayItem.title} 
-          articleContent={displayItem.content} 
-          isDarkMode={isDark} 
-          onClose={() => setShowMentor(false)} 
-        />
-      )}
-
       <section className="relative w-full h-[60vh] overflow-hidden">
         <img src={displayItem.imageUrl} className="absolute inset-0 w-full h-full object-cover animate-in fade-in zoom-in-110 duration-1000" alt={displayItem.title} />
         <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-10">
@@ -253,13 +242,6 @@ const AprofundarDetail: React.FC<any> = ({ content, markAsRead, onToggleSave, on
             <span className="material-symbols-outlined text-[24px]">share</span>
           </button>
         </header>
-
-        <button 
-          onClick={() => setShowMentor(true)}
-          className="absolute bottom-32 right-6 z-40 size-16 bg-blue-600 text-white rounded-3xl shadow-2xl flex items-center justify-center animate-bounce border-2 border-white/20"
-        >
-          <span className="material-symbols-outlined text-[32px]">smart_toy</span>
-        </button>
       </section>
 
       <main className={`relative z-20 -mt-24 px-8 pt-16 pb-20 rounded-t-[56px] shadow-2xl transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-[#334155]'}`}>

@@ -63,11 +63,11 @@ const DetailedArticleCard: React.FC<{
             {item.readingTime}
           </span>
         </div>
-        <h2 className="text-[22px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter line-clamp-2 block overflow-hidden min-h-[1.1em]">
+        <h2 className="text-[22px] font-[900] text-white font-display mb-2 leading-[1.1] tracking-tighter line-clamp-2 overflow-hidden">
           {item.title}
         </h2>
         {item.subtitle && (
-          <p className="text-[13px] font-medium text-white/80 line-clamp-1 italic block overflow-hidden">
+          <p className="text-[13px] font-medium text-white/80 line-clamp-1 italic">
             "{item.subtitle}"
           </p>
         )}
@@ -87,12 +87,8 @@ const Aprofundar: React.FC<{ readPostIds: string[]; content: any }> = ({ readPos
   }, []);
 
   const studies = useMemo(() => {
-    // FILTRAGEM ESTREITA: APENAS OS TÍTULOS SOLICITADOS VINDO DA PLANILHA
     return (content.sheetPosts || []).filter((p: any) => {
-      if (p.categoryType !== 'APROFUNDAR') return false;
-      const title = p.title.toLowerCase();
-      // "O Código de Emaús" ou "O Ajuste Fino"
-      return title.includes('código de emaús') || title.includes('ajuste fino');
+      return p.categoryType === 'APROFUNDAR';
     });
   }, [content.sheetPosts]);
 
